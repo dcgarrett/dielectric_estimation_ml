@@ -1,0 +1,36 @@
+.. dp_ml documentation master file, created by
+   sphinx-quickstart on Tue Dec 12 09:58:51 2017.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+
+Welcome to the dp_ml docs!
+=================================
+
+.. image:: /figures/dp_ml_logo.png
+   :align: center
+
+.. role:: red
+
+dp_ml (**d**\ ielectric **p**\ roperty estimation using **m**\ achine **l**\ earning) is an open source package for estimating dielectric properties of biological tissues from antenna measurements.
+It uses simulations of materials with known properties to generate models which can predict properties from future measurements.
+This work is performed in the research group of `Dr. Elise Fear <http://www.ucalgary.ca/fear/>`_ at the `University of Calgary <http://www.ucalgary.ca/>`_.
+
+Our vision is to create a platform where groups around the world can contribute data and generate models which can be used with their own measurement configurations.
+
+This code is under constant revision.
+Questions or comments can be sent to `David Garrett.`__
+
+__ mailto:dgarrett@ucalgary.ca?subject=dp_ml_feedback
+
+Table of contents:
+
+.. toctree::
+   :maxdepth: 2
+
+   installation
+   motivation
+   background
+   tutorial
+   function_definitions
+   results
