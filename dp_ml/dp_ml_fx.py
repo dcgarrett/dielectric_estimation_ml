@@ -27,8 +27,6 @@ import h5py
 from .config import * # import all the config parameters natively
 
 from .hdf5_fx import *
-from .hdf5_fx import *
-from .hdf5_fx import *
 from .tsar_math import *
 
 
@@ -39,8 +37,12 @@ def say_something():
 
 def get_params_from_filename(fileName): # Handles both int or float values, get eps and sig from filename
     """Get permittivity, conductivity, and separation distance from a filename.
-       Example formatted filename: eps20_sig30_50mm.xls"""
+       Example formatted filename: eps20_sig30_50mm.xls
+       For calibration procedures, gives '0' for every param. e.g. Thru.xls"""
     #print(fileName)
+    if ("Thru" in fileName) or ("Reflect" in fileName): # calibration procedures
+        return 0, 0, 0 
+    
     strList = fileName.split("_")
     nums = re.findall('\d+', fileName)
     
@@ -392,36 +394,6 @@ def importSingleXL(dataPath, fileName):
     S_comp = np.vstack((s11_comp, s21_comp, s12_comp, s22_comp))
 
     return f, S_f, S_comp
-
-
-def convertXLtoHDF5(dataPath, dbName, dbHier, timeDomain = True):
-    """Imports XLS files, checks if the data exists yet in the HDF5 file, and adds it if not"""
-    from pathlib import Path
-
-    dirContents = os.listdir(dataPath)
-    if '.DS_Store' in dirContents:
-            dirContents.remove('.DS_Store')
-
-    if not Path(dbName).is_file():
-            createFile(dbName)
-
-    for i in range(0,len(dirContents)):
-            eps, sig, dist = get_params_from_filename(dirContents[i])
-
-            # check if entry exists
-            with h5py.File(dbName,'r') as f:
-                if dbHier + '/frequency/' + dirContents[i] in f:
-                    print("Entry exists in db. Continuing")
-                    continue
-                    f.close()
-              
-            f, S_f, S_comp = importSingleXL(dataPath,dirContents[i])
-            # add to the HDF5 database
-            newEntryFrequency(dbName, dbHier, dirContents[i], dist, eps, sig, f[:-1], S_f)	
-		
-            if timeDomain:
-                t, S_t = S_compToTimeDomain(f, S_comp)
-                newEntryTime(dbName, dbHier, dirContents[i], dist, eps, sig, t, S_t)
 
 def S_compToTimeDomain(freq, S_comp):
 	#freq is the array of frequency

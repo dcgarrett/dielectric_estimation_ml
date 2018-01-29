@@ -29,6 +29,14 @@ class TestDPML(unittest.TestCase):
 		result = dp_ml.mag2db(10)
 		self.assertEqual(result, 20)
 
+	def test_importFromDir(self):
+		assertTrue(os.isdir(dataPath))
+
+	#def test_reshapeData(self):
+		
+
+	#def convertXLtoHDF5 
+
 	def 
 
 

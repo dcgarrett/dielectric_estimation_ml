@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>background &#8212; dp_ml 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="tutorial" href="tutorial.html" />
+    <link rel="prev" title="motivation" href="motivation.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>dp_ml 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>background</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="motivation.html">motivation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="tutorial.html">tutorial</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="background">
+<h1>background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h1>
+<img alt="_images/dp_ml_logo.png" class="align-center" src="_images/dp_ml_logo.png" />
+<p>The dp_ml package uses a few forms of machine learning to develop models for property estimation.
+Namely, neural networks and elastic net regression.
+We also use different algorithms for processing the raw data prior to generating the models, such as wavelet decomposition and peaks analysis.</p>
+<p>This document will describe some of the underlying math.
+It may be best to read this document prior to the Tutorial document, in order to better understand the steps it takes.</p>
+<div class="section" id="the-problem">
+<h2>the problem<a class="headerlink" href="#the-problem" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Let us simply define the problem we are trying to solve:</dt>
+<dd><ul class="first last simple">
+<li>Antenna measurements allow for non-invasive interrogation of tissues by propagating electric fields within them</li>
+<li>Dielectric properties cannot be directly measured. Instead we measure parameters such as the reflected and transmitted signals between the two antennas. These are called the Scattering Parameters (S-Parameters), and can be considered in both the time and frequency domain.</li>
+<li>We now have an inverse problem. The dielectric properties affect the S-Parameters, but we don&#8217;t know what they were to begin with. How can we go from the S-Parameters back to the dielectric properties?</li>
+</ul>
+</dd>
+</dl>
+<p>The solution that we use in this method is that <strong>in simulation, we do know what the properties are</strong>.
+This means that for every S-Parameter, we can know exactly what dielectric properties this corresponds to.
+Machine learning comes into play by figuring out how to use all of the data that we simulate to create models capable of estimating properties in the future, particularly from S-parameters from measurements.
+The basic idea is to create a training set &#8212; that is, a large set of data with known properties &#8212; in order to generate these models which can perform predictions from future S-parameters when dielectric properties are not known.</p>
+</div>
+<div class="section" id="simulations">
+<h2>simulations<a class="headerlink" href="#simulations" title="Permalink to this headline">¶</a></h2>
+<p>We use finite difference time domain (FDTD) simulations to generate our training data.</p>
+<p>The antenna developed in our group - dubbed the Nahanni - has very high performance for biomedical applications, with large bandwidth (1.5-12 GHz), matching with human tissues, and isolation from exterior signals.
+However, its large and complex geometry causes long simulation time.
+To overcome this, two simplified models are considered.
+First, the antenna is modelled as a cylindrical waveguide with similar dimensions and filling materials.
+The second approach involves modelling the aperture of the realistic antenna using a Huygens surface equivalence source.
+To do this, an initial simulation is performed where fields incident upon the antenna aperture are recorded.
+In future simulations, these incident fields are then recreated without needing to simulate the body of the antenna.</p>
+<p>Our training configuration consists of two cylindrical waveguides separated by the tissue under test.
+If desired, you can simulate a different configuration (see the Tutorial section).
+We simulate over a broad band of frequency: 2-12 GHz.
+The resulting scattering parameters can be represented in both the time domain and frequency domain.</p>
+<div class="figure align-center" id="id1">
+<a class="reference internal image-reference" href="_images/WaveguideDiagram.png"><img alt="_images/WaveguideDiagram.png" src="_images/WaveguideDiagram.png" style="width: 226.2px; height: 252.6px;" /></a>
+<p class="caption"><span class="caption-text">Our simulation configuration, as performed using Sim4Life</span></p>
+</div>
+<p>In both cases, the dielectric properties of the tissue are swept in a grid as:</p>
+<p>$$ \epsilon = 2:2:68 $$
+$$ \sigma = 0:1:10 $$</p>
+<p>This range of values represents expected properties in biological tissues.
+Data is extracted in the form of magnitude/phase of reflected (S11) and transmitted (S21) signals, at 5000 frequency points between 2-12 GHz.</p>
+</div>
+<div class="section" id="electromagnetic-theory">
+<h2>electromagnetic theory<a class="headerlink" href="#electromagnetic-theory" title="Permalink to this headline">¶</a></h2>
+<p>The wave propagation can be represented as a uniform plane wave.</p>
+<p>$$ \alpha = \omega \sqrt{\frac{\mu \epsilon}{2} \bigg[ \sqrt{1 + [\frac{\sigma}{\omega \epsilon}]^2 } -1 \bigg] } $$
+$$ \beta = \omega \sqrt{\frac{\mu \epsilon}{2} \bigg[ \sqrt{1 + [\frac{\sigma}{\omega \epsilon}]^2 } + 1 \bigg] } $$</p>
+<p>The reflections can be determined by the intrinsic impedance of each medium, where:</p>
+<p>$$ \eta_{tiss} = \sqrt{\frac{j \omega \mu}{\sigma + j \omega \epsilon}} $$</p>
+<p>Next, the transmission coefficient at each interface can be found as:</p>
+<p>$$ T = \frac{2 \eta_2}{\eta_2 + \eta_1} $$</p>
+</div>
+<div class="section" id="data-preprocessing">
+<h2>data preprocessing<a class="headerlink" href="#data-preprocessing" title="Permalink to this headline">¶</a></h2>
+<p>Different forms of processing can be applied to the data prior to model generation.</p>
+<div class="section" id="peak-detection">
+<h3>peak detection<a class="headerlink" href="#peak-detection" title="Permalink to this headline">¶</a></h3>
+<p>The simplest may be simply determining the peak the transmitted time domain pulse.
+This is an efficient form of data storage, as a large time domain signal (~5000 samples) can be reduced to a simple two-element array (magnitude and time of the maxima).</p>
+</div>
+<div class="section" id="wavelet-analysis">
+<h3>wavelet analysis<a class="headerlink" href="#wavelet-analysis" title="Permalink to this headline">¶</a></h3>
+<p>A conventional inner product for two continuous functions which meet the <span class="math">\(L^2\)</span> criteria is:</p>
+<p>$$ \langle f(t), w(t) \rangle = \int_a^b f(t)w(t) dt $$</p>
+<p>where <span class="math">\(f(t)\)</span> is the signal of interest (e.g. a specific time-domain transmission signal for given properties), and <span class="math">\(w(t)\)</span> is a mother wavelet.</p>
+<p>Since digital signals are inherently discrete, this can also be expressed as:</p>
+<p>$$ \langle f, w \rangle = \sum_{n=0}^{n=N} f[n] w[n] $$</p>
+<p>where <span class="math">\(N\)</span> is the number of time steps, and <span class="math">\(n\)</span> is the current time sample.</p>
+<p>This can be done conveniently in python using</p>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">np</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">w</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The trick for us will be to generate the mother wavelet, meeting the orthonormality requirements, and ensuring equal number of samples.</p>
+<p>A couple options for the mother wavelet:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Use the time domain signal from the Thru simulation</li>
+<li>Use the time domain signal from 10 mm; eps = 25; sig = 0 simulation</li>
+<li>Use a conventional wavelet such as Mexican hat</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="frequency-domain-analysis">
+<h3>frequency domain analysis<a class="headerlink" href="#frequency-domain-analysis" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="machine-learning">
+<h2>machine learning<a class="headerlink" href="#machine-learning" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>This modelling problem can be described by the following:</dt>
+<dd><ul class="first last simple">
+<li>Continuous regression (estimate permittivity and conductivity)</li>
+<li>∼ 2-12 features (e.g. Mag/phase of S-parameters and their feature expansions)</li>
+<li>Training data on order of 1000s of samples</li>
+</ul>
+</dd>
+</dl>
+<p>Two techniques are found to be suitable candidates and will be discussed below: elastic net regression, and neural network regression.
+All data processing is done through the open-source toolbox <em>tensorflow</em>.</p>
+<div class="section" id="neural-networks">
+<h3>neural networks<a class="headerlink" href="#neural-networks" title="Permalink to this headline">¶</a></h3>
+<p>The basic idea of a neural network is first described.</p>
+<p>In our method,</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/ann_diagram.png"><img alt="_images/ann_diagram.png" src="_images/ann_diagram.png" style="width: 524.0px; height: 338.0px;" /></a>
+</div>
+<p>Neural networks loosely model the functionality of biological neurons, whereby neurons respond to an input stimulus with some corresponding output.
+The process of “learning” is simply determining the set of input weights and biases which produce the least error at the output with the training data.
+A single hidden layer is sufficient to model any arbitrary function.
+However, the advantage of multiple hidden layers is to reduce incidence of local minima, and to create more abstract models.
+Any model with two or more hidden layers is referred to as “deep learning”.</p>
+<p>In the case of dielectric property estimation, the input layer consists of the extracted features: magnitude and phase data of the reflected and transmitted signals.
+The differentiated phase is again considered since wrapped phase provides little information to the network.
+There are two continuous outputs, permittivity and conductivity.
+The neural network configuration is shown in Figure X.
+Note that a model is generated for each frequency point.</p>
+</div>
+<div class="section" id="elastic-net-regression">
+<h3>elastic net regression<a class="headerlink" href="#elastic-net-regression" title="Permalink to this headline">¶</a></h3>
+<p>Elastic net regression is a flexible method which combines strengths from several other models: ordinary least squares (OLS) regression, ridge regression, and LASSO regression.
+One might wonder what the issue is with ordinary least squares regression.
+In fact, the Gauss-Markov theorem states that of all unbiased estimators, OLS has the minimum variance in coefficient estimation.
+It is interesting to question, though, whether this is the best method purely in terms of mean-squared error (MSE).
+For instance, if we introduce a biased estimator - i.e. the mean of the estimated coefficients is offset from the true mean - we can reduce variance.
+This is shown in the figure below:</p>
+<p><strong>figure</strong></p>
+<p>So even though the estimator is biased, the mean squared error can actually be less than the OLS case!
+Ridge and LASSO achieve this by introducing penalty terms for the complexity of the model, where the complexity is determined by the l2 and l1 norms of the model coefficients, respectively.
+Elastic net combines these two penalty terms, as shown below:</p>
+<div class="math">
+\[\begin{split}\hat{\beta}^{OLS} &amp;= \textrm{argmin}||y-X\beta||_2^2 \\
+\hat{\beta}^{ridge} &amp;= \textrm{argmin}||y-X\beta||_2^2 + \color{red} \lambda_2||\beta||_2^2 \\
+\hat{\beta}^{lasso} &amp;= \textrm{argmin}||y-X\beta||_2^2 + \color{blue} \lambda_1||\beta||_1  \\
+\hat{\beta}^{elastic} &amp;= \textrm{argmin}||y-X\beta||_2^2 + \color{red} \lambda_2||\beta||_2^2 \color{black} + \color{blue} \lambda_1||\beta||_1 \\\end{split}\]</div>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="motivation.html">motivation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="tutorial.html">tutorial</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, David C. Garrett.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

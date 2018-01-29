@@ -10,19 +10,19 @@ from tensorflow.python import debug as tf_debug
 
 from .hdf5_fx import *
 
-
 logs_path = "/tmp/dp_ml/2"
-
 
 
 def procIdentity(sig):
 	"""Identity function for use in batch retrieval."""
 	return sig
 
+
 def reset_graph(seed=42): # make notebook stable across runs
 	tf.reset_default_graph()
 	tf.set_random_seed(seed)
 	np.random.seed(seed)
+
 
 def setupModel(n_inputs = 10,  n_outputs = 2, n_hidden1=20,n_hidden2=20,n_epochs=10000,batch_size=50,dropout_rate=0.5,activation_function=tf.sigmoid, learning_rate = 0.01):
 	"""sets up tensorflow model for dielectric property estimation"""
@@ -69,6 +69,7 @@ def setupModel(n_inputs = 10,  n_outputs = 2, n_hidden1=20,n_hidden2=20,n_epochs
 
 	return init, saver, loss, training_op, X_ph, y_ph, logits
 
+
 def runModel(dbName, dbHier, init, saver, loss, training_op, X_ph, y_ph, n_epochs=10000, batch_size = 50, freqOrTime = 'frequency', procFx = procIdentity):
 	timestr = time.strftime("%Y%m%d-%H%M%S")
 	modelFileName = "./Models/ANN_model_"+ timestr +"_" + str(n_epochs)+"-epochs_" + ".ckpt"
@@ -90,7 +91,7 @@ def runModel(dbName, dbHier, init, saver, loss, training_op, X_ph, y_ph, n_epoch
 			for epoch in range(n_epochs):
 				for iteration in range(n_files // batch_size):
 					X_batch, y_batch = getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime, procFx = procFx)
-					pdb.set_trace()
+					# pdb.set_trace()
 					
 
 					# now for some tensorflow debugging code:
@@ -108,8 +109,6 @@ def runModel(dbName, dbHier, init, saver, loss, training_op, X_ph, y_ph, n_epoch
 		save_path = saver.save(sess, modelFileName)
 
 
-
-
 def getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime='frequency', procFx = procIdentity):
 	# dbFile is the h5py pointer to the databse file
 	# dbHier is the relative path to the data you're looking for (without 'frequency' or 'time')
@@ -123,14 +122,23 @@ def getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime='frequency'
 
 	# Get some example data to see what the size is:	
 	exData = procFx(group[groupNames[iteration*batch_size]][:])
-	X_batch = np.zeros((exData.shape[0]*batch_size, exData.shape[1]+1))
-	y_batch = np.zeros((exData.shape[0]*batch_size, 2))
+	
+	#X_batch = np.zeros((exData.shape[0]*batch_size, exData.shape[1]+1)) # check this - I think it needs to be transposed
+	#X_batch = np.zeros((exData.shape[1]*batch_size, exData.shape[0]+1)) # changed Jan 17
+	X_batch = np.zeros((batch_size, exData.shape[1], exData.shape[0]+1))
+
+	#y_batch = np.zeros((exData.shape[1]*batch_size, 2)) # Changed jan 17
+	y_batch = np.zeros((batch_size, 2))
 		
-	lenDat = exData.shape[0]
+	#lenDat = exData.shape[0]
+	lenDat = exData.shape[1]
 	
 	for i in range(0,batch_size):
 		ind = iteration*batch_size + i
-		f_S = group[groupNames[ind]][:]
+		
+		f_S = group[groupNames[ind]][:].T
+		#f_S = group[groupNames[ind]][:]
+
 		#f_S = group[groupNames[ind]][1:-1]
 		eps_i = group[groupNames[ind]].attrs['eps']
 		sig_i = group[groupNames[ind]].attrs['sig']
@@ -140,21 +148,29 @@ def getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime='frequency'
 		sig_avg = sig_i*sep_i/np.sum(sep_i)
 		sep_tot = np.sum(sep_i)
 
-		y_batch[lenDat*i:lenDat*(i+1),0] = eps_avg
-		y_batch[lenDat*i:lenDat*(i+1),1] = sig_avg
+		#y_batch[lenDat*i:lenDat*(i+1),0] = eps_avg
+		#y_batch[lenDat*i:lenDat*(i+1),1] = sig_avg
+		y_batch[i,0] = eps_avg # changed jan 17
+		y_batch[i,1] = sig_avg
 
-		X_batch[lenDat*i:lenDat*(i+1),0] = sep_tot
-		X_batch[lenDat*i:lenDat*(i+1),1:] = procFx(f_S)
+
+
+		#X_batch[lenDat*i:lenDat*(i+1),0] = sep_tot			# should this be sep distance or frequency?
+		#X_batch[lenDat*i:lenDat*(i+1),1:] = procFx(f_S)
+		X_batch[i,:,0] = sep_tot			# should this be sep distance or frequency?
+		X_batch[i,:,1:] = procFx(f_S)	
+
 
 	return X_batch, y_batch
-
 
 
 def getMax(sig, nmax = 1):
         # returns the nmax local maxima in a given vector. Intended for time domain signals
         # If nmax > num local maxima, extra entries are padded with zeros
 
-        #SMax = np.zeros((nmax, (sig.shape[0]-1)*2))        
+        sig = np.transpose(sig)
+        
+		#SMax = np.zeros((nmax, (sig.shape[0]-1)*2))        
         SMax = np.zeros((nmax,2))
 
         t = sig[0,:]
@@ -175,7 +191,10 @@ def getMax(sig, nmax = 1):
 		
                 SMax[:,(i-1)*2-1] = sijMax
                 SMax[:,(i-1)*2-2] = tMax_i
-        return SMax
+
+        SMax = np.transpose(SMax)
+        return SMax # seems like it's not tranposing
+
 
 def predictFromModel(modelFileName, X_data, saver, logits, X_ph):
 	with tf.Session() as sess:

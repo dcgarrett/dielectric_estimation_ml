@@ -3,6 +3,10 @@
 
 import h5py
 import numpy as np
+import dp_ml
+
+from .dp_ml_fx import *
+
 
 def createFile(dbName):
 	""" Creates a new hdf5 file according to the groups below
@@ -13,15 +17,25 @@ def createFile(dbName):
 	
 	data_group = f.create_group("Data")
 	model_group = f.create_group("Models")
+	cal_group = f.create_group("Calibration")
 
 	sim_group = data_group.create_group("Simulation")
-	meas_group = data_group.create_group("Measurements")
+	meas_group = data_group.create_group("Measurement")
+
+	sim_cal_group = cal_group.create_group("Simulation")
+	meas_cal_group = cal_group.create_group("Measurement")
 
 	cwg_group = sim_group.create_group("CircWG")
 	nahanni_group = sim_group.create_group("Nahanni")
 
 	cwg_group_f = cwg_group.create_group('frequency')
 	cwg_group_t = cwg_group.create_group('time')
+
+	cwg_cal_group = sim_cal_group.create_group("CircWG")
+	nahanni_cal_group = sim_cal_group.create_group("Nahanni")
+
+	cwg_cal_group_f = cwg_cal_group.create_group('frequency')
+	cwg_cal_group_t = cwg_cal_group.create_group('time')
 	
 	f.close()
 
@@ -62,24 +76,24 @@ def newEntryFrequency(dbName, dbHier, indFileName, sepDist, eps, sig, freq, S_f)
 
 
 def newEntryTime(dbName, dbHier, indFileName, sepDist, eps, sig, t, S_t):
-        """Creates a new entry with data in the frequency domain"""
-        # dbName is the hdf5 file
-        # dbHier is the hierarchical path within the database - e.g. '/Data/Simulations/CircWG'
-        # indFileName is the name of the recorded file according to your convention. Used to check existence
-        # sepDist is the separation distance. If multilayered, this is an array of each layer e.g. [2,20,2]
-        # eps is the permittivity. If multilayered, this is an array of each layer e.g. [30, 10, 30]
-        # sig is the conductivity. If multilayered, this is an array of each layer e.g. [10, 2, 10]
-        # t is the array of the signal in the time domain
-        # S_t is the 4xlen(t) array of S11, S21, S12, S22 in the time domain
+		"""Creates a new entry with data in the frequency domain"""
+		# dbName is the hdf5 file
+		# dbHier is the hierarchical path within the database - e.g. '/Data/Simulations/CircWG'
+		# indFileName is the name of the recorded file according to your convention. Used to check existence
+		# sepDist is the separation distance. If multilayered, this is an array of each layer e.g. [2,20,2]
+		# eps is the permittivity. If multilayered, this is an array of each layer e.g. [30, 10, 30]
+		# sig is the conductivity. If multilayered, this is an array of each layer e.g. [10, 2, 10]
+		# t is the array of the signal in the time domain
+		# S_t is the 4xlen(t) array of S11, S21, S12, S22 in the time domain
 
-        with h5py.File(dbName,'r+') as f:
-                dset_t = f.create_dataset(dbHier + '/time/' + indFileName.replace('.xls',''),(max(t.shape),5,),dtype='float64',compression='gzip')
-                dset_t[:,0] = t.T
-                dset_t[:,1:5] = S_t.T
-                dset_t.attrs['sepDist'] = sepDist
-                dset_t.attrs['eps'] = eps
-                dset_t.attrs['sig'] = sig
-                f.close()
+		with h5py.File(dbName,'r+') as f:
+				dset_t = f.create_dataset(dbHier + '/time/' + indFileName.replace('.xls',''),(max(t.shape),5,),dtype='float64',compression='gzip')
+				dset_t[:,0] = t.T
+				dset_t[:,1:5] = S_t.T
+				dset_t.attrs['sepDist'] = sepDist
+				dset_t.attrs['eps'] = eps
+				dset_t.attrs['sig'] = sig
+				f.close()
 
 def readEntry(dbName, dbHier, indFileName, freqOrTime = '/frequency/'):
 
@@ -88,3 +102,41 @@ def readEntry(dbName, dbHier, indFileName, freqOrTime = '/frequency/'):
 		entry = entry[:]
 		f.close()
 		return entry
+
+
+def convertXLtoHDF5(dataPath, dbName, dbHier, timeDomain = True):
+	"""Imports XLS files, checks if the data exists yet in the HDF5 file, and adds it if not"""
+	from pathlib import Path
+
+	dirContents = os.listdir(dataPath)
+	if '.DS_Store' in dirContents:
+			dirContents.remove('.DS_Store')
+
+	if not Path(dbName).is_file():
+			createFile(dbName)
+
+	for i in range(0,len(dirContents)):
+			eps, sig, dist = dp_ml.get_params_from_filename(dirContents[i])
+
+			# check if entry exists
+			with h5py.File(dbName,'r') as f:
+				if dbHier + '/frequency/' + dirContents[i] in f:
+					print("Entry exists in db. Continuing")
+					continue
+					f.close()
+
+			f, S_f, S_comp = dp_ml.importSingleXL(dataPath,dirContents[i])
+			# dimensions should be (numParams, numFrequencyPoints)
+			S_f_dim = np.shape(S_f)
+			if S_f_dim[0] > S_f_dim[1]:
+				S_f = np.transpose(S_f)
+			# add to the HDF5 database
+			dp_ml.newEntryFrequency(dbName, dbHier, dirContents[i], dist, eps, sig, f[:-1], S_f)
+
+			if timeDomain:
+				# dimensions should be (numParams, numFrequencyPoints)
+				S_t_dim = np.shape(S_t)
+				if S_f_dim[0] > S_f_dim[1]:
+					S_t = np.transpose(S_t)
+				t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)
+				dp_ml.newEntryTime(dbName, dbHier, dirContents[i], dist, eps, sig, t, S_t)
