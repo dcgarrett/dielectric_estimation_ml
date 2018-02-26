@@ -12,41 +12,123 @@ background
 The dp_ml package uses a few forms of machine learning to develop models for property estimation.
 Namely, neural networks and elastic net regression.
 We also use different algorithms for processing the raw data prior to generating the models, such as wavelet decomposition and peaks analysis.
-
-This document will describe some of the underlying math.
+This document will describe some of the underlying techniques used in the package.
 It may be best to read this document prior to the Tutorial document, in order to better understand the steps it takes.
+
+introduction
+-------------
+The estimation of dielectric properties - permittivity and conductivity - is of interest in many biomedical applications. 
+These properties depend primarily on water and salt content, which change according to tissue type and physiological status. 
+However, beyond a full imaging system, dielectric property estimation at microwave frequencies (i.e. 10s of MHz to 10s of GHz) is most often done with the open-ended coaxial probe. 
+The device assesses the reflection which occurs at the end of the coaxial line when in contact with the tissue in order to estimate permittivity and conductivity. 
+Due to the geometry of the system, it is only able to sense within a few mm of the probe head. It thus provides little utility for in vivo monitoring applications.
+
+To assess the properties of tissues below the surface of the skin, antennas can be used to couple electromagnetic waves into volumes of human tissue. 
+The reflected and transmitted signals can then be used to estimate the dielectric properties of the tissue. However, in heterogeneous tissues common in humans, property estimation presents a challenge due to complex antenna behaviour, multiple reflections at tissue interfaces, and multiple signal paths which can be taken. 
+Analytical modelling of this scenario is thus very difficult.
+Electromagnetic simulations provide a valuable tool when exploring new processing techniques, antenna designs, and interactions of fields with various materials. 
+They can be used to develop models to guide our understanding of these complex phenomena, allowing better interpretation of measurements in the real world. 
+Given the strong agreement between simulation and experiment, this study now aims to use simulation tools as a direct model of phenomena in experiment. 
+With recent advances in computation and simulation software, we now aim to i) use simulation to generate large amounts of data in order to quickly interpret dielectric properties from antenna measurements using machine learning techniques; and ii) develop optimization techniques to iteratively solve for dielectric properties in measurement using simulations of similar environments. 
+This document focuses on machine learning techniques.
+
+Our group has proposed a method of dielectric property estimation using microwave antenna measurements. 
+This method involves placing antennas in direct contact with the tissue, and transmitting microwave signals through the tissue. 
+We generally obtain an accuracy within 10% for homogeneous tissue-mimicking mixtures, making the method comparable with the dielectric probe. 
+However, in advancing to more complex scenarios, this method may not be robust against multilayered tissues, different tissue geometries, and poor antenna contact.
 
 the problem
 ------------
 
-Let us simply define the problem we are trying to solve:
-	- Antenna measurements allow for non-invasive interrogation of tissues by propagating electric fields within them
+Let us simply summarize the problem we are trying to solve:
+	- Antenna measurements are used, allowing for non-invasive interrogation of tissues by propagating electric fields within them
 	- Dielectric properties cannot be directly measured. Instead we measure parameters such as the reflected and transmitted signals between the two antennas. These are called the Scattering Parameters (S-Parameters), and can be considered in both the time and frequency domain.
-	- We now have an inverse problem. The dielectric properties affect the S-Parameters, but we don't know what they were to begin with. How can we go from the S-Parameters back to the dielectric properties?
+	- We now have an inverse problem. The dielectric properties affect the S-Parameters, but we do not know what they were to begin with. How can we go from the S-Parameters back to the dielectric properties?
 
 The solution that we use in this method is that **in simulation, we do know what the properties are**. 
 This means that for every S-Parameter, we can know exactly what dielectric properties this corresponds to.
 Machine learning comes into play by figuring out how to use all of the data that we simulate to create models capable of estimating properties in the future, particularly from S-parameters from measurements.
 The basic idea is to create a training set --- that is, a large set of data with known properties --- in order to generate these models which can perform predictions from future S-parameters when dielectric properties are not known.
+Before feeding large amounts of data into the learning algorithms, we first preprocess the data to highlight specific features of it: for instance, time of arrival and signal intensity.
+
+
+some electromagnetic theory
+-----------------------------
+
+Permittivity (ε) and conductivity (σ) describe a material’s ability to store and dissipate electric energy, respectively. 
+In biological contexts, permittivity is primarily indicative of water content, and conductivity is indicative primarily of both water and ionic content. 
+Biological tissues are almost entirely nonmagnetic (despite small iron content in the blood) meaning only the dielectric properties are considered. 
+In this method, the objective is to recover bulk dielectric properties from antenna measurements. The antenna system is shown below.
+
+.. image:: figures/AntModel.png
+   :align: center
+   :scale: 50
+
+First, let us get a sense of how the reflected and transmitted signals are affected by the tissue properties.
+By neglecting complex phenomena in the antenna such as radial spreading and near-field interaction, the wave propagation can be represented as a uniform plane wave.
+The magnitude of the transmitted signal is influenced by the attenuation coefficient :math:`\alpha`, and the phase of the transmitted signal is influenced by the phase coefficient :math:`\beta`. 
+These are found from the dielectric properties as:
+
+$$ \\alpha = \\omega \\sqrt{\\frac{\\mu \\epsilon}{2} \\bigg[ \\sqrt{1 + [\\frac{\\sigma}{\\omega \\epsilon}]^2 } -1 \\bigg] } $$
+$$ \\beta = \\omega \\sqrt{\\frac{\\mu \\epsilon}{2} \\bigg[ \\sqrt{1 + [\\frac{\\sigma}{\\omega \\epsilon}]^2 } + 1 \\bigg] } $$
+
+where ω is the angular frequency in [rad/s], and μ0 is the permeability of free space.
+The resulting amplitude change loss of the uniform plane wave can be determined as a simple exponential decay:
+
+.. image:: figures/python/epsSigTransmitted.png
+   :align: center
+
+However, at the interface of each antenna, some portion of the signal is reflected and some portion is transmitted.
+The reflections can be determined by the intrinsic impedance of each medium, where:
+
+$$ \\eta_{tiss} = \\sqrt{\\frac{j \\omega \\mu}{\\sigma + j \\omega \\epsilon}} $$
+
+The reflection and transmission coefficients at each interface can be found as:
+
+$$ \\Gamma = \\frac{\\eta_2 - \\eta_1}{\\eta_2 + \\eta_1} $$
+$$ T = \\frac{2 \\eta_2}{\\eta_2 + \\eta_1} = 1 - \\Gamma $$
+
+
+Considering the entire system, we can model the recorded transmitted and reflected signals as:
+
+$$ S_{21} = T_1 e^{-\\alpha d} e^{-j \\beta d} T_2 $$
+$$ S_{11} = \\Gamma_1 + T_1 e^{-2 \\alpha d} e^{-2j \\beta d} \\Gamma_2 T_2 $$
+
+The realistic scenario is much more complex; there are reflections at the antenna apertures, losses and phase shift within the antennas, and spreading of the signal within the tissue. 
+Further, antenna behaviour is very difficult to model analytically as it varies depending on the dielectric properties of the tissue, the signal frequency, and system geometry. 
+To model this, advanced simulation tools can be used. Our group uses a finite difference time domain (FDTD) method, which solves Maxwell’s curl equations in the time domain. 
+Antenna simulations have been found to agree with measured data, making this a powerful tool for antenna measurement analysis.
+
+In this method, electromagnetic simulation tools are used to generate training data for property estimation. 
+Simulations are advantageous in that we can create as much training data as we need, or at least as much as time and resources allow. 
+Further, the dielectric properties in the simulation are known to be true. In measurement, we have the issue of determining a ground truth, since other methods of property estimation such as the dielectric probe can have as much as 10% error.
+
+
 
 
 simulations
 -------------------
 
 We use finite difference time domain (FDTD) simulations to generate our training data.
+This allows us to model the complex interactions between the antenna and the tissue.
 
 The antenna developed in our group - dubbed the Nahanni - has very high performance for biomedical applications, with large bandwidth (1.5-12 GHz), matching with human tissues, and isolation from exterior signals. 
 However, its large and complex geometry causes long simulation time. 
 To overcome this, two simplified models are considered. 
-First, the antenna is modelled as a cylindrical waveguide with similar dimensions and filling materials. 
+First, the antenna is modelled as a cylindrical waveguide with similar dimensions and filling material. 
 The second approach involves modelling the aperture of the realistic antenna using a Huygens surface equivalence source. 
 To do this, an initial simulation is performed where fields incident upon the antenna aperture are recorded. 
 In future simulations, these incident fields are then recreated without needing to simulate the body of the antenna.
+
+
+homogeneous tissues
+`````````````````````
 
 Our training configuration consists of two cylindrical waveguides separated by the tissue under test.
 If desired, you can simulate a different configuration (see the Tutorial section).
 We simulate over a broad band of frequency: 2-12 GHz.
 The resulting scattering parameters can be represented in both the time domain and frequency domain.
+We first simulate using a homogeneous model.
 
 .. figure:: figures/WaveguideDiagram.png
    :align: center
@@ -54,37 +136,23 @@ The resulting scattering parameters can be represented in both the time domain a
 
    Our simulation configuration, as performed using Sim4Life
 
-In both cases, the dielectric properties of the tissue are swept in a grid as:
+The dielectric properties of the tissue are swept in a grid as:
 
 $$ \\epsilon = 2:2:68 $$
 $$ \\sigma = 0:1:10 $$
 
 This range of values represents expected properties in biological tissues. 
-Data is extracted in the form of magnitude/phase of reflected (S11) and transmitted (S21) signals, at 5000 frequency points between 2-12 GHz.
+Resulting 2-port S-Parameters are extracted as complex values at 5000 frequency points between 2-12 GHz.
 
 
-
-
-electromagnetic theory
-----------------------
-
-The wave propagation can be represented as a uniform plane wave.
-
-$$ \\alpha = \\omega \\sqrt{\\frac{\\mu \\epsilon}{2} \\bigg[ \\sqrt{1 + [\\frac{\\sigma}{\\omega \\epsilon}]^2 } -1 \\bigg] } $$
-$$ \\beta = \\omega \\sqrt{\\frac{\\mu \\epsilon}{2} \\bigg[ \\sqrt{1 + [\\frac{\\sigma}{\\omega \\epsilon}]^2 } + 1 \\bigg] } $$
-
-The reflections can be determined by the intrinsic impedance of each medium, where:
-
-$$ \\eta_{tiss} = \\sqrt{\\frac{j \\omega \\mu}{\\sigma + j \\omega \\epsilon}} $$
-
-Next, the transmission coefficient at each interface can be found as:
-
-$$ T = \\frac{2 \\eta_2}{\\eta_2 + \\eta_1} $$
 
 data preprocessing
 ------------------
 
+In recording the reflected and transmitted signals, we record everything we can: generally thousands of frequency points, which corresponds to thousands of points in the time domain.
+Might there be a better way to represent these signals?
 Different forms of processing can be applied to the data prior to model generation.
+From the very sparse basis of the frequency and time domains, this may allow us to create a more dense and more meaningful space from which to learn.
 
 peak detection
 ````````````````
@@ -106,12 +174,8 @@ $$ \\langle f, w \\rangle = \\sum_{n=0}^{n=N} f[n] w[n] $$
 
 where :math:`N` is the number of time steps, and :math:`n` is the current time sample.
 
-This can be done conveniently in python using 
-
-.. code-block:: py
-
-    import numpy as np
-    np.inner(f,w)
+.. image:: figures/python/inner_product.gif
+   :align: center
     
 The trick for us will be to generate the mother wavelet, meeting the orthonormality requirements, and ensuring equal number of samples.
 
@@ -123,14 +187,14 @@ A couple options for the mother wavelet:
 
 frequency domain analysis
 ``````````````````````````
-
+By looking at each frequency point independently,
 
 
 machine learning
 -----------------
 
 This modelling problem can be described by the following:
-	- Continuous regression (estimate permittivity and conductivity)
+	- Continuous regression (estimating permittivity and conductivity)
 	- ∼ 2-12 features (e.g. Mag/phase of S-parameters and their feature expansions)
 	- Training data on order of 1000s of samples
 
@@ -161,6 +225,14 @@ There are two continuous outputs, permittivity and conductivity.
 The neural network configuration is shown in Figure X. 
 Note that a model is generated for each frequency point.
 
+Measure of loss
+
+Optimizer algorithm
+
+Random batch selection
+
+
+
 elastic net regression
 ```````````````````````
 
@@ -171,7 +243,9 @@ It is interesting to question, though, whether this is the best method purely in
 For instance, if we introduce a biased estimator - i.e. the mean of the estimated coefficients is offset from the true mean - we can reduce variance. 
 This is shown in the figure below:
 
-**figure**
+.. image:: figures/BiasVariance.jpg
+   :align: center
+   :scale: 50
 
 So even though the estimator is biased, the mean squared error can actually be less than the OLS case! 
 Ridge and LASSO achieve this by introducing penalty terms for the complexity of the model, where the complexity is determined by the l2 and l1 norms of the model coefficients, respectively. 

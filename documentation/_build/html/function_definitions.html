@@ -51,7 +51,7 @@
         
   <div class="section" id="function-definitions">
 <h1>function definitions<a class="headerlink" href="#function-definitions" title="Permalink to this headline">¶</a></h1>
-<img alt="figures/dp_ml_logo.png" class="align-center" src="figures/dp_ml_logo.png" />
+<img alt="_images/dp_ml_logo.png" class="align-center" src="_images/dp_ml_logo.png" />
 <span class="target" id="module-dp_ml"></span><div class="section" id="module-dp_ml.dp_ml_fx">
 <span id="dp-ml-helper-functions"></span><h2>dp_ml helper functions<a class="headerlink" href="#module-dp_ml.dp_ml_fx" title="Permalink to this headline">¶</a></h2>
 <p>Some helper functions for the dielectric property estimation toolbox
@@ -110,15 +110,69 @@ For calibration procedures, gives &#8216;0&#8217; for every param. e.g. Thru.xls
 <div class="section" id="module-dp_ml.tensorflow_fx">
 <span id="tensorflow-functions"></span><h2>tensorflow functions<a class="headerlink" href="#module-dp_ml.tensorflow_fx" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
+<dt id="dp_ml.tensorflow_fx.filterData">
+<code class="descclassname">dp_ml.tensorflow_fx.</code><code class="descname">filterData</code><span class="sig-paren">(</span><em>X</em>, <em>y</em>, <em>sepDist=None</em>, <em>eps=None</em>, <em>sig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tensorflow_fx.filterData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the data meeting specified input criteria.
+For each parameter not given, the dataset meeting the other criteria is given</p>
+<p>Inputs:</p>
+<blockquote>
+<div><ul class="simple">
+<li>X: extracted data with dimensions [nBatches, nParameters, nSamples]</li>
+<li>y: corresponding eps and sig with dimensions [nBatches, 2]</li>
+<li>sepDist: desired separation distance</li>
+<li>eps: desired permittivity</li>
+<li>sig: desired conductivity</li>
+</ul>
+</div></blockquote>
+<p>Outputs:</p>
+<blockquote>
+<div><ul class="simple">
+<li>X_des: filtered X data according to sepDist, eps, and sig criteria</li>
+<li>y_des: filtered y data according to sepDist, eps, and sig criteria.</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="dp_ml.tensorflow_fx.getBatchFromDB">
+<code class="descclassname">dp_ml.tensorflow_fx.</code><code class="descname">getBatchFromDB</code><span class="sig-paren">(</span><em>dbFile</em>, <em>dbHier</em>, <em>iteration</em>, <em>batch_size</em>, <em>freqOrTime='frequency'</em>, <em>procFx=&lt;function procIdentity&gt;</em>, <em>scale=True</em>, <em>order=False</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tensorflow_fx.getBatchFromDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>dbFile is the h5py pointer to the databse file</p>
+<ul class="simple">
+<li>dbHier is the relative path to the data you&#8217;re looking for (without &#8216;frequency&#8217; or &#8216;time&#8217;)</li>
+<li>index is the range of values to extract from the file</li>
+<li>procFx is the function used to treat the X data</li>
+<li>returns X_batch and y_batch for use with neural net</li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="dp_ml.tensorflow_fx.getMax">
+<code class="descclassname">dp_ml.tensorflow_fx.</code><code class="descname">getMax</code><span class="sig-paren">(</span><em>sig</em>, <em>dbFile=None</em>, <em>nmax=1</em>, <em>scale=True</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tensorflow_fx.getMax" title="Permalink to this definition">¶</a></dt>
+<dd><p>getMax of a given signal. 
+Inputs: 
+- sig: some matrix of dimensions[timeVec+numSParams, numPoints]
+- nmax: number of maxima to choose
+- scale: whether or not to scale the magnitude values by dividing by 1e9, time values by mult by 1e9
+Output is [numSParams, 2*nmax], where both the magnitude and time of the maxima are given</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="dp_ml.tensorflow_fx.procIdentity">
-<code class="descclassname">dp_ml.tensorflow_fx.</code><code class="descname">procIdentity</code><span class="sig-paren">(</span><em>sig</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tensorflow_fx.procIdentity" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">dp_ml.tensorflow_fx.</code><code class="descname">procIdentity</code><span class="sig-paren">(</span><em>sig</em>, <em>dbFile=None</em>, <em>scale=True</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tensorflow_fx.procIdentity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identity function for use in batch retrieval.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="dp_ml.tensorflow_fx.setupModel">
-<code class="descclassname">dp_ml.tensorflow_fx.</code><code class="descname">setupModel</code><span class="sig-paren">(</span><em>n_inputs=10</em>, <em>n_outputs=2</em>, <em>n_hidden1=20</em>, <em>n_hidden2=20</em>, <em>n_epochs=10000</em>, <em>batch_size=50</em>, <em>dropout_rate=0.5</em>, <em>activation_function=&lt;function sigmoid&gt;</em>, <em>learning_rate=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tensorflow_fx.setupModel" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">dp_ml.tensorflow_fx.</code><code class="descname">setupModel</code><span class="sig-paren">(</span><em>n_inputs=10</em>, <em>n_outputs=2</em>, <em>n_hidden1=20</em>, <em>n_hidden2=20</em>, <em>n_epochs=10000</em>, <em>batch_size=50</em>, <em>dropout_rate=0.5</em>, <em>activation_function=&lt;function sigmoid&gt;</em>, <em>learning_rate=0.01</em>, <em>opt='gradient'</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tensorflow_fx.setupModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>sets up tensorflow model for dielectric property estimation</p>
+<ul class="simple">
+<li>n_inputs should be the number of dimensions  - e.g. sepDist, f, 8 s-param values</li>
+<li>n_outputs is the number of outputs - e.g. 2 for permittivity and conductivity</li>
+<li>n_hidden1 is the number of hidden layers in the first layer</li>
+<li>n_hidden2 is the number of hidden layers in the second layer</li>
+<li>n_epochs is the number of times the algorithm will iterate</li>
+</ul>
 </dd></dl>
 
 </div>
@@ -158,6 +212,53 @@ For calibration procedures, gives &#8216;0&#8217; for every param. e.g. Thru.xls
 <li>dbHier is the hierarchical path within the database - e.g. &#8216;/Data/Simulations/CircWG&#8217;</li>
 <li>indFileName  is the name of the recorded file according to your convention. Used to check existence</li>
 </ul>
+</dd></dl>
+
+</div>
+<div class="section" id="module-dp_ml.tsar_math">
+<span id="math-functions"></span><h2>math functions<a class="headerlink" href="#module-dp_ml.tsar_math" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="dp_ml.tsar_math.chirpz">
+<code class="descclassname">dp_ml.tsar_math.</code><code class="descname">chirpz</code><span class="sig-paren">(</span><em>x</em>, <em>A</em>, <em>W</em>, <em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tsar_math.chirpz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the chirp z-transform.
+The discrete z-transform,
+<span class="math">\(X(z) = \sum_{n=0}^{N-1} x_n z^{-n}\)</span>
+is calculated at M points,
+<span class="math">\(z_k = AW^-k, k = 0,1,...,M-1\)</span>
+for A and W complex, which gives
+<span class="math">\(X(z_k) = \sum_{n=0}^{N-1} x_n z_k^{-n}\)</span></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dp_ml.tsar_math.chirpz2">
+<code class="descclassname">dp_ml.tsar_math.</code><code class="descname">chirpz2</code><span class="sig-paren">(</span><em>x</em>, <em>A</em>, <em>W</em>, <em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tsar_math.chirpz2" title="Permalink to this definition">¶</a></dt>
+<dd><p>chirp z transform per Rabiner derivation pp1256
+x is our (complex) signal of length N</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dp_ml.tsar_math.chirpz3">
+<code class="descclassname">dp_ml.tsar_math.</code><code class="descname">chirpz3</code><span class="sig-paren">(</span><em>x</em>, <em>a=1.0</em>, <em>w=None</em>, <em>m=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tsar_math.chirpz3" title="Permalink to this definition">¶</a></dt>
+<dd><p>To evaluate the frequency response for the range f1 to f2 in a signal
+with sampling frequency Fs, use the following:
+m = 32;                          ## number of points desired
+w = exp(-2i*pi*(f2-f1)/(m*Fs));  ## freq. step of f2-f1/m
+a = exp(2i*pi*f1/Fs);            ## starting at frequency f1
+y = czt(x, m, w, a);</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dp_ml.tsar_math.dtft">
+<code class="descclassname">dp_ml.tsar_math.</code><code class="descname">dtft</code><span class="sig-paren">(</span><em>x</em>, <em>omegas</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tsar_math.dtft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exact evaluation the DTFT at the indicated points omega for the signal x
+Note this is incredibly slow</p>
+<p>Note x runs from 0 to N-1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dp_ml.tsar_math.nextpow2">
+<code class="descclassname">dp_ml.tsar_math.</code><code class="descname">nextpow2</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="headerlink" href="#dp_ml.tsar_math.nextpow2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the smallest power of two greater than or equal to n.</p>
 </dd></dl>
 
 </div>

@@ -27,7 +27,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="tutorial" href="tutorial.html" />
+    <link rel="next" title="background" href="background.html" />
     <link rel="prev" title="installation guide" href="installation.html" /> 
   </head>
   <body role="document">
@@ -42,7 +42,7 @@
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="tutorial.html">tutorial</a>&#160;&#160;»
+        <a href="background.html">background</a>&#160;&#160;»
         </p>
 
       </div>
@@ -51,15 +51,15 @@
         
   <div class="section" id="motivation">
 <h1>motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h1>
-<img alt="figures/dp_ml_logo.png" class="align-center" src="figures/dp_ml_logo.png" />
-<p>Here some basic introductory notes are given.
+<img alt="_images/dp_ml_logo.png" class="align-center" src="_images/dp_ml_logo.png" />
+<p>Here some basic introductory notes are given informally.
 The experienced reader can safely skip this section.</p>
 <div class="section" id="what-are-dielectric-properties">
 <h2>what are dielectric properties?<a class="headerlink" href="#what-are-dielectric-properties" title="Permalink to this headline">¶</a></h2>
 <p>First, a seemingly unrelated question: How can light travel in the vacuum of the universe?
 The answer lies both in the underlying form of electromagnetic waves, and also in the fabric of the universe itself.
 Electromagnetic waves &#8212; everything from radio waves to visible light to gamma rays &#8212; consists of oscillating electric and magnetic fields.
-These fields are defined by their effect on charged particles: the electric field causes some force on a charged particle, and the magnetic field causes some force on a <em>moving</em> charged particle.
+These fields are defined by their effect on charged particles: the electric field causes some force on charged particles, and the magnetic field causes some force on <em>moving</em> charged particles.
 Perhaps even more fundamental than Maxwell&#8217;s equations, this is shown by the Lorentz force:</p>
 <p>$$ \vec{F} = q(\vec{v} \times \vec{B} + \vec{E}) $$</p>
 <p>This equation simply describes the definition of the <span class="math">\(\vec{E}\)</span> and <span class="math">\(\vec{B}\)</span> fields.
@@ -67,21 +67,22 @@ Charge <span class="math">\(q\)</span> is a fundamental property of matter.</p>
 <p>As with all waves, electromagnetic waves need a medium to travel in.
 Sound can only travel in the medium of air, water waves of course need water, and the &#8220;wave&#8221; at a hockey game needs a crowd.
 So how is it that light from a distant galaxy can reach the Earth?
-Or how can we use radio waves to communicate to satellites in our solar system (and beyond)?</p>
+How can we use radio waves to communicate to satellites in our solar system (and beyond)?</p>
 <p>The strange nature of our universe is that the &#8220;emptiness&#8221; of free space isn&#8217;t really empty, but it can actually store and transmit these fields.
 This is reprented by the fundamental dielectric properties: the <em>permittivity</em> and <em>permeability</em> of free space, represented by <span class="math">\(\epsilon_0\)</span> and <span class="math">\(\mu_0\)</span>, respectively.
 Strangely enough, it seems that these properties are innate in our universe.
 Might there be another universe out there somewhere without them?
 Or might the edge of our own universe be defined as where these properties &#8220;end&#8221;?</p>
 <p>Let&#8217;s take another example, this time with static instead of time varying fields.
-Consider a simple parallel plate capacitor.
-When we charge the plates, say by connecting them to a battery, there is an accumulation of equal and opposite charge on each of the two plates.
+Consider a simple parallel plate capacitor.</p>
+<img alt="_images/dp_figs-0.png" class="align-center" src="_images/dp_figs-0.png" />
+<p>When we charge the plates, say by connecting them to a battery, there is an accumulation of equal and opposite charge on each of the two plates.
 But how does each plate &#8220;know&#8221; of the presence of the other plate?
 It is the same electric field which carries this &#8220;charge force&#8221; from one plate to another, and the medium that it travels in is the same permittivity of free space that electromagnetic waves interact with.
 The electric field and associated properties, as described in this example, will be the focus of the remainder of the documentation.</p>
 </div>
-<div class="section" id="on-the-origin-of-dielectric-properties-in-materials">
-<h2>on the origin of dielectric properties in materials<a class="headerlink" href="#on-the-origin-of-dielectric-properties-in-materials" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-origin-of-dielectric-properties-in-materials">
+<h2>the origin of dielectric properties in materials<a class="headerlink" href="#the-origin-of-dielectric-properties-in-materials" title="Permalink to this headline">¶</a></h2>
 <p>The electric field is defined by the force it exerts on charged particles.
 It is important to consider that most materials we consider to be electrically neutral are not actually neutral at the microscopic scale.
 In fact, the fundamental building blocks of the universe are, for the most part, electrically charged.
@@ -90,27 +91,56 @@ So it is conceivable that even in electrically neutral materials, there will be 
 <p>Consider again the familiar parallel plate capacitor.
 What happens when we stick some material between the charged plates?
 The electric field causes the positive charges of the material to feel some force away from the positive plate, and the negative charges to feel a force towards it.
-If these charges can move to any extent, the result is that another field is generated inside the material.
-This is referred to as its polarization.</p>
-<p>Consider the water molecule, <span class="math">\(\text{H}_2\text{O}\)</span>.</p>
-<p>The ability of these charged particles to move or rotate is related to what we call its <em>electric susceptibility</em>.</p>
-<p>Depending on the nature of this charge separation, there are several timescales which this can occur at.
-Considering atoms are surrounded by electron clouds, this is an obvious interaction which exists in nearly all materials.
-This shift of electrons relative to the nuclues is called electronic (or optical) polarization, and happens nearly instantaneously.
-Similar shifts of charged particles can occur in molecules.
-Certain molecules &#8212; like water &#8212; already have a dipole moment before the electric field is applied!
-The electric field causes these dipoles on average to align with the field.</p>
+If these charges can move to any extent, the result is that another field is generated inside the material due to their charge separation.
+This is referred to as its polarization, and it points in the direction opposite to the original applied field.</p>
+<img alt="_images/dp_figs-7.png" class="align-center" src="_images/dp_figs-7.png" />
+<p>This can be explained by looking more closely at how the material&#8217;s particles interact with the applied field.
+For instance, consider how neutral atoms would respond to the applied field:</p>
+<blockquote>
+<div><img alt="_images/dp_figs-3.png" class="align-center" src="_images/dp_figs-3.png" />
+</div></blockquote>
+<p>So, given an applied field, there will be some resulting polarization field in the opposite direction.
+The ability of these charged particles to move or rotate is related to what we call its <em>electric susceptibility</em>.
+Depending on the nature of this charge separation, there are several timescales which this can occur at.
+Considering atoms are surrounded by electron clouds, this is an obvious interaction which exists in nearly all materials as shown above.
+This shift of electrons relative to the nuclues is called electronic (or optical) polarization, and happens nearly instantaneously.</p>
+<p>Similar shifts of charged particles can occur in molecules.
+Certain molecules &#8212; like water &#8212; already have a dipole moment before any electric field is applied.
+However, the molecules are each somewhat randomly oriented, and so the net field cancels out in neutral water.
+When an electric field is applied, these dipoles on average align against the external field.
+Due to molecular interactions, there is a specific time scale that this happens.
+This is called the relaxation time.</p>
+<img alt="_images/dp_figs-6.png" class="align-center" src="_images/dp_figs-6.png" />
+</div>
+<div class="section" id="how-do-we-characterize-dielectric-properties">
+<h2>how do we characterize dielectric properties?<a class="headerlink" href="#how-do-we-characterize-dielectric-properties" title="Permalink to this headline">¶</a></h2>
+<p>Given the time scale of the rotations and movements of charged particles which lead to permittivity, there are several ways we can model this.
+Perhaps the simplest of these is the Debye model.</p>
+<p>While analysis is often done in the frequency domain, time domain characterization employs some telling features of dielectric materials.
+A useful tool to this end is the susceptibility kernel &#8212; describing the constitutive relation between the electric flux density and the electric field as:</p>
+<div class="math">
+\[\mathbf{D}(r,t) = \epsilon_0 \mathbf{E}(r,t) + (\chi * \mathbf{E})(r,t)\]</div>
+<p>In the time domain, the constitutive relation (between electric flux density and electric field) can be represented by:</p>
+<div class="math">
+\[\frac{1}{\epsilon_0} \mathbf{D}(r,t) = \epsilon_{\infty}(r)\mathbf{E}(r,t) + (\chi * \mathbf{E})(r,t)\]</div>
+<p>where <span class="math">\(\chi(r,t)\)</span> represents the susceptibility kernel. The temporal convolution:</p>
+<div class="math">
+\[(\chi * \mathbf{E})(t) = \int_{-\infty}^{t} \chi(t-t')\mathbf{E}(t')dt'\]</div>
+<p>describes the dispersive nature of the material. For instance, for Debye models the susceptibility kernel is:</p>
+<div class="math">
+\[\chi (t) = H(t) \beta e^{-t / \tau}\]</div>
+<p>where <span class="math">\(H(t)\)</span> is the Heaviside unit step function to ensure causality, and <span class="math">\(\beta \tau = \epsilon_s - \epsilon_\infty\)</span>.</p>
 </div>
 <div class="section" id="why-estimate-dielectric-properties">
 <h2>why estimate dielectric properties?<a class="headerlink" href="#why-estimate-dielectric-properties" title="Permalink to this headline">¶</a></h2>
-<p>Any device which uses electric or magnetic fields interacts with these properties in the materials in/around it.
+<p>Any device which uses electric or magnetic fields interacts with dielectric properties of the materials in or around it.
 For instance, cell phone cases, circuit board substrate, and engineering iron rings.
-These are what I would call &#8220;manufacturing&#8221; reasons for knowing the dielectric properties; we want to know how are devices will function given the properties of its materials.</p>
-<p>Alternatively, these properties can be exploited to learn things about other materials.
+These are what one could call &#8220;manufacturing&#8221; reasons for knowing the dielectric properties; we want to know how are devices will function given the properties of its composition.</p>
+<p>Alternatively, dielectric properties can be used to learn things about other materials.
 We can take advantage of the fact that certain substances have higher properties than others, and use this as a contract mechanism to determine the relative proportions.
-For instance, water has very high permittivity.
+For instance, water has very high permittivity compared to most other biological content.
 One common application of this is looking at the moisture content of soil or crops: if the dielectric properties are high, we can infer that there must be a high water content.
-I call this &#8220;exploratory&#8221; reasons for estimating dielectric properties.</p>
+One could call this &#8220;exploratory&#8221; reasons for estimating dielectric properties.</p>
 <p>Certain materials&#8217; properties are highly frequency dependent due to their chemical composition.
 An even more specific analysis of the material can be done by exploiting this frequency response.
 For instance, say two substances which could exist in crops both have high permittivity.
@@ -118,30 +148,54 @@ The shape and amplitude of the dielectric properties as a function of frequency 
 This is most commonly done at infrared frequencies, since this is where most of these chemical &#8220;fingerprints&#8221; are highlighted due to their characteristic molecular resonances.</p>
 <p>An emerging application &#8212; and the one we are exploring in this toolbox &#8212; is the use of dielectric properties in biomedical applications.
 Similarly to the crop example, the permittivity of human tissues tends to be dominated by water content.
-Tissues such as blood and muscle tend to have much higher permittivity than those such as fat and bone.
-This is because they contain much more water.
+Tissues with high water content such as blood and muscle tend to have much higher permittivity than those such as fat and bone.
 It was suggested in the late &#8216;90s that tumorous tissues have high permittivity due to greater water content than surrounding tissues.
 This contrast was then exploited through microwave imaging, where the objective was to noninvasively determine their presence and location.</p>
 <p>This general sensitivity to water content has been proposed for several other imaging and sensing applications, such as detecting fluid accumulation in lungs, monitoring bone health, and classifying strokes as ischemic or hemorragic.
-Our group has recently been investigating the use of dielectric contrast for human hydration monitoring.</p>
+Our group has recently been investigating the use of dielectric contrast for human hydration monitoring.
+Applications such as these will be kept in mind as we go along.</p>
 </div>
 <div class="section" id="how-are-dielectric-properties-measured">
 <h2>how are dielectric properties measured?<a class="headerlink" href="#how-are-dielectric-properties-measured" title="Permalink to this headline">¶</a></h2>
 <p>The answer generally depends on the frequency of operation.
 At relatively low frequencies (&lt; 10 MHz), the simplest way to do this is to use a simple device: a capacitor.
 Assuming we can properly shape the material into a planar slab, if we place it between two metal plates with known dimensions, by measuring the capacitance of the material we can determine the complex permittivity.
-The trouble with this method is when the frequency</p>
+The trouble with this method is when the frequency is high enough that there is some phase change across the electrodes or the sample.
+Rather than electrostatic models, this would then require time-varying and radiating models.</p>
+<img alt="_images/dp_figs-2.png" class="align-center" src="_images/dp_figs-2.png" />
 <p>In fact, a fundamental shift happens at a certain point.
 Consider the direction of the electric field.
-What was first a</p>
+It was first pointing from one capacitor to the other, but in a radiating field it is actually pointing in a transverse direction.</p>
+<img alt="_images/dp_figs-4.png" class="align-center" src="_images/dp_figs-4.png" />
 <p>This means that at radio frequencies and above, different methods need to be adopted.
-A common method &#8212; particularly for biomedical applications &#8212; is the open-ended coaxial probe.</p>
-<p>In cases where</p>
+A common method &#8212; particularly for biomedical applications &#8212; is the open-ended coaxial probe.
+The probe &#8211; typically with a diameter of a few mm &#8211; is placed directly in contact with the material.
+Upon applying a RF signal to the probe, some amount of the signal will be reflect at the probe-material interface.
+The magnitude and phase of this reflection are telling of the dielectric properties of the material.</p>
+<img alt="_images/dp_figs-8.png" class="align-center" src="_images/dp_figs-8.png" />
+<p>Despite its wide use, there are several limitations of using the probe.
+First, it has a very shallow sensing depth.
+This is generally considered to be about 3 mm.
+Clearly, for <em>in vivo</em> tissue assessment, the probe can only be used for surfaces such as the skin and tongue.
+Secondly, it can be difficult to achieve proper contact with tissues, particularly firm ones such as bone.
+Any slight air gap within the shallow sensing volume of the probe can greatly influence property estimation.
+Finally, in heterogeneous tissues, it can be unclear which component of the tissue one is measuring, and whether any mixing phenomena occur.
+This can be an issue for tissues such as bone marrow and mineral compositions.</p>
+<p>Our group has developed methods using 2-port antenna measurements to overcome these limitations.
+This involves placing a tissue in contact with antennas on either side of it, and measuring the reflected and transmitted signals.
+From these measurements, we have developed methods to estimate the permittivity and conductivity from 3-8 GHz.
+These methods rely on removing the influence of the antennas in our measurements, to isolate the response of the tisuse.
+Dielectric properties can then be analytically solved for.
+The method has been validated in homogeneous tissue-mimicking mixtures ranging from 3-5 cm.
+However, some challenges are known to arise in more complex tissue geometries.
+For instance, simulations in the heel show effects such as multipath, partial reflections, and radial spreading.
+These effects are very difficult to model analytically, making them challenging to account for in our current technique.
+This has lead us to approach other methods of property estimation from these antenna measurements.</p>
 </div>
 <div class="section" id="why-do-this-using-machine-learning">
 <h2>why do this using machine learning?<a class="headerlink" href="#why-do-this-using-machine-learning" title="Permalink to this headline">¶</a></h2>
 <p>Machine learning has the modern world abuzz.
-Many claim that it will provide solutions to all of our previous problems, and young energetic engineers and scientists are flocking to San Francisco with the hopes of achieving a lifetime&#8217;s fortune and fame.
+Many claim that it will provide solutions to all of our problems, and young energetic engineers and scientists are flocking to San Francisco with the hopes of achieving a lifetime&#8217;s fortune and fame.
 This isn&#8217;t so different from the Gold Rush of the 19th century, or the Dot Com craze of the late 20th century.
 Will this boom also result in a bust?</p>
 <p>This question extends beyond this Python package, but I will use it as a reason to better justify why we need machine learning.
@@ -153,9 +207,16 @@ Previous methods of dielectric property estimation are analytic.
 That is, they rely on equations (either empirical or fundamental) to uniquely solve for the dielectric properties.
 While this works well for simple cases (e.g. homogeneous slabs of material with proper measurement equipment), many of these assumptions can break down in the case of complex tissue compositions in the human body.
 Effects such as multipath, radial spreading, and antenna coupling can have very complex influence over our measurements.
-Rather than trying to develop many complex equations to model these effects, we use two simple equations: Maxwell&#8217;s curl equation.
-By iteratively solving these equations in the time domain, we can simulate to a high degree of accuracy how electromagnetic waves interact with materials.
-The method we used is called Finite Difference Time Domain.</p>
+Rather than trying to develop many complex equations to model these effects, we use two simple equations: Maxwell&#8217;s curl equations:</p>
+<div class="math">
+\[\begin{split}\nabla \times \mathbf{H} = \mathbf{J} + \frac{\partial \mathbf{D}}{\partial t} \\
+\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}\end{split}\]</div>
+<p>By iteratively solving these equations in the time domain, we can simulate to a high degree of accuracy how electromagnetic waves interact with materials.
+The method we used is called Finite Difference Time Domain, using the Sim4Life software package.
+By simulating a large variety of tissue types, we aim to &#8220;learn&#8221; a model of how the resulting reflected and transmitted signals vary with dielectric properties and geometry.
+This will allow us to create a model where the dielectric properties can be estimated from recorded signals.</p>
+<p>Let&#8217;s get going!</p>
+<img alt="_images/animation.gif" class="align-center" src="_images/animation.gif" />
 </div>
 </div>
 
@@ -168,7 +229,7 @@ The method we used is called Finite Difference Time Domain.</p>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="tutorial.html">tutorial</a>&#160;&#160;»
+        <a href="background.html">background</a>&#160;&#160;»
         </p>
 
       </div>

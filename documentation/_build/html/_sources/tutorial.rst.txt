@@ -16,7 +16,9 @@ This guide will run you through a typical workflow for the dp_ml package.
 We will first generate/download some data, then store it in a convenient form.
 Next, we will generate models from the simulated data, and then perform some property estimation in both simulation and measurement.
 
-All of the steps followed below are given in a Jupyter Notebook for convenient testing. 
+All of the steps followed below are given in a Jupyter `Notebook`_ for convenient testing. 
+
+.. _Notebook: dp_mlpackagetesting.html
 
 data generation
 -----------------

@@ -31,4 +31,10 @@ h5py database functions
 .. automodule:: dp_ml.hdf5_fx
    :members:
 
+math functions
+-----------------------
+
+.. automodule:: dp_ml.tsar_math
+   :members:
+
 

@@ -135,8 +135,52 @@ def convertXLtoHDF5(dataPath, dbName, dbHier, timeDomain = True):
 
 			if timeDomain:
 				# dimensions should be (numParams, numFrequencyPoints)
+				t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)
 				S_t_dim = np.shape(S_t)
 				if S_f_dim[0] > S_f_dim[1]:
 					S_t = np.transpose(S_t)
-				t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)
 				dp_ml.newEntryTime(dbName, dbHier, dirContents[i], dist, eps, sig, t, S_t)
+
+def importCTI(fileName, numF=1000):
+    file_obj = open(dp_ml.measPath+"/"+fileName,'r')
+
+
+    line = file_obj.readline()
+    while line != "VAR_LIST_BEGIN":
+        line = file_obj.readline()
+        line = line.strip()
+
+    f = np.zeros((numF,))
+    i = 0
+    line = file_obj.readline()
+    line = line.strip()
+    while line != "VAR_LIST_END":
+        f[i] = float(line)
+        i = i+1
+        line = file_obj.readline()
+        line = line.strip()
+
+    line = file_obj.readline()
+
+
+    S = np.zeros((8,numF))
+    S_comp = np.zeros((4,numF),dtype=np.complex)
+    S_t = np.zeros((4,numF))
+
+    for j in range(0,4):
+        i = 0
+        line = file_obj.readline()
+        line = line.strip()
+        while line != "END":
+            S[2*j,i], S[2*j+1,i] = dp_ml.realimag_to_magphase(float(line.split(',')[0]),float(line.split(',')[1]))
+            i = i+1
+            line = file_obj.readline()
+            line = line.strip()
+    
+        sii_comp = S[2*j,:] * (np.cos(S[2*j+1,:]) + 1j*np.sin(S[2*j+1,:]))
+        S_comp[j,:] = sii_comp
+    
+        line = file_obj.readline()
+    
+    t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)    
+    return f, S_comp, S, t, S_t
