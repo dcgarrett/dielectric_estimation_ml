@@ -25,19 +25,18 @@ class TestDPML(unittest.TestCase):
 		self.assertEqual(mag, np.sqrt(2))
 		self.assertEqual(phase, 45*np.pi/180)
 
-	def test mag2db(self):
+	def test_mag2db(self):
 		result = dp_ml.mag2db(10)
 		self.assertEqual(result, 20)
 
 	def test_importFromDir(self):
-		assertTrue(os.isdir(dataPath))
+		self.assertTrue(os.path.isdir(dataPath))
 
 	#def test_reshapeData(self):
 		
 
 	#def convertXLtoHDF5 
 
-	def 
 
 
 if __name__ == '__main__':

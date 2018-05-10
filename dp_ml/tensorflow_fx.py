@@ -127,6 +127,7 @@ def getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime='frequency'
 		- index is the range of values to extract from the file
 		- procFx is the function used to treat the X data
 		- returns X_batch and y_batch for use with neural net
+
 	'''
 
 	group = dbFile[dbHier+'/'+freqOrTime]
@@ -169,8 +170,8 @@ def getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime='frequency'
 			X_batch[i,0,:] = sep_tot
 		X_batch[i,1:,:] = procFx(f_S, dbFile=dbFile, scale=scale)
 	
-	X_batch_smaller = X_batch[:,0:3,:]
-	X_batch = X_batch_smaller
+	#X_batch_smaller = X_batch[:,0:3,:] # why do i do this to myself... apr 20, 2018
+	#X_batch = X_batch_smaller
 	#X_batch[:,1:,0] = X_batch[:,1:,0] * 1e9
 
 	return X_batch, y_batch

@@ -23,11 +23,13 @@ import scipy.io as sio
 import tensorflow as tf
 import platform
 import h5py
+from scipy.signal import tukey
 
 from .config import * # import all the config parameters natively
 
 from .hdf5_fx import *
 from .tsar_math import *
+from .test_dpml import *
 
 
 
@@ -395,10 +397,13 @@ def importSingleXL(dataPath, fileName):
 
     return f, S_f, S_comp
 
-def S_compToTimeDomain(freq, S_comp):
+def S_compToTimeDomain(freq, S_comp,tukeywin=0.5):
 	#freq is the array of frequency
 	#S_comp is the 4*len(freq) array of complex s11,s21,s12,s22
-
+	for i in range(0,4):
+		#S_comp[i,:] = tukey(len(freq)-1,tukeywin)*S_comp[i,:];
+		S_comp[i,:] = tukey(len(freq),tukeywin)*S_comp[i,:];
+	
 	t, s11_t = inverseczt_charlotte(freq[:-1], S_comp[0,:])
 	t, s21_t = inverseczt_charlotte(freq[:-1], S_comp[1,:])
 	t, s12_t = inverseczt_charlotte(freq[:-1], S_comp[2,:])

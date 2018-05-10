@@ -4,10 +4,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
-import numba
 import math
 import numpy.fft as FFT
-
+from scipy import signal
 
 
 
@@ -51,11 +50,41 @@ def inverseczt_charlotte(freq,s11):
 	#bttczt = np.conj(chirpz3(np.conj(fsig),A,W,N))*df*np.sqrt(2) # should be 5001 points
 	phaseshift = np.exp(1j*2*np.pi*fmin*np.arange(0,N)*dt)
 	complexsig = phaseshift*bttczt
-	tsig = np.real(complexsig)
+	
+	# SHOULD THIS BE ABSOLUTE INSTEAD OF REAL??? TRYING THIS NOW
+	#tsig = np.real(complexsig)
+	tsig = np.absolute(complexsig)
 	
 	return t, tsig
 
+def inverseczt_tukey(freq,s11,alpha=0.01):
+	# TSAR pulse parameters:
+	dt_tsar=2e-12;   #Time Step
+	T_tsar = 10e-9
+	#dt_tsar = T_tsar / len(freq) # 1e-11 for 1000, 2e-12 for 5000;
+	t_tsar=np.arange(0,T_tsar,dt_tsar)   #Time Vector
+	t = t_tsar
 
+	N = len(t) # 5000
+	dt = t[1] - t[0]
+	df = freq[1] - freq[0]
+	fmin = min(freq)
+
+	M = len(freq)
+	W = np.exp(-1j*2*np.pi*dt*df);
+
+	win = signal.tukey(M,alpha=alpha)
+
+	fsig = win*s11
+	bttczt = np.conj(chirpz(np.conj(2*fsig),1,W,N))*df
+	
+	phaseshift = exp(1j*2*np.pi*fmin*np.arange(0,N)*dt)
+
+	complexsig = phaseshift*bttczt
+	signal_t = np.absolute(complexsig);
+	
+	return signal_t
+	
 
 def chirpz(x,A,W,M):
 	# doesn't seem to work when M != len(x)...
