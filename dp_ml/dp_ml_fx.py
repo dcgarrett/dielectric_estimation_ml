@@ -1,5 +1,5 @@
-""" Some helper functions for the dielectric property estimation toolbox
-	David Garrett, October 2017 """
+""" Some helper functions for the dielectric property estimation toolbox.
+Mostly relating to data importing and formatting """
 
 from sklearn.neural_network import MLPRegressor
 import numpy as np
@@ -32,16 +32,25 @@ from .tsar_math import *
 from .test_dpml import *
 
 
-
-# Start the functions
 def say_something():
 	return (u'What a day to be alive! \n Arnold Schwarzenegger, 2017')
 
-def get_params_from_filename(fileName): # Handles both int or float values, get eps and sig from filename
-    """Get permittivity, conductivity, and separation distance from a filename.
-       Example formatted filename: eps20_sig30_50mm.xls
-       For calibration procedures, gives '0' for every param. e.g. Thru.xls"""
-    #print(fileName)
+
+def get_params_from_filename(fileName):
+    """Get permittivity, conductivity, and separation distance from an Excel filename.
+
+    Inputs:
+
+        - fileName -- file name of the data. Formatted as: 'epsXX_sigXX_XXmm.xls' Example formatted filename: eps20_sig30_50mm.xls
+
+    Outputs:
+
+        - eps -- permittivity 
+        - sig -- conductivity
+        - dist -- separation distance
+
+    Note: for calibration procedures, gives '0' for every param. e.g. Thru.xls, Reflect.xls"""
+
     if ("Thru" in fileName) or ("Reflect" in fileName): # calibration procedures
         return 0, 0, 0 
     
@@ -67,128 +76,37 @@ def get_params_from_filename(fileName): # Handles both int or float values, get 
     dist = nums2
     return float(eps[0]), float(sig[0]), float(dist[0])
 
+
 def realimag_to_magphase(real, imag):
-    """Converts real and imaginary values to a magnitude and phase [rad] value."""
+    """Converts real and imaginary values to a magnitude and phase [rad] value.
+    Works for arrays or single points
+
+    Inputs:
+
+        - real -- real part of the signal
+        - imag -- imaginary part of the signal
+
+    Outputs:
+
+        - mag -- magnitude
+        - phase -- phase [rad]"""
+
     mag = np.absolute([real + 1j*imag])
     phase = np.angle([real+ 1j*imag ])
     return mag, phase
 
 def mag2db(mag):
-    """Converts a magnitude value to a db representation (using 20*log10(mag))"""
+    """Converts a magnitude value to a db representation (using 20*log10(mag))
+    
+    Inputs:
+
+        - mag -- signal magnitude (generally from 0-1)
+
+    Outputs:
+
+        - db -- decibel for of the magnitude"""
     db = 20.*np.log10(mag)
     return db
-
-# Load data
-def importFromDir(dataPath):
-    """Imports data from a given datapath"""
-    dirContents = os.listdir(dataPath)
-    if '.DS_Store' in dirContents:
-        dirContents.remove('.DS_Store')
-    
-    #initialize data
-    eps = np.zeros(len(dirContents))
-    sig = np.zeros(len(dirContents))
-    dist = np.zeros(len(dirContents))
-    s11_real = np.zeros((len(dirContents),numFreqPoints))
-    s11_imag = np.zeros((len(dirContents),numFreqPoints))
-    s11_mag = np.zeros((len(dirContents),numFreqPoints))
-    s11_ang = np.zeros((len(dirContents),numFreqPoints))
-    s12_real = np.zeros((len(dirContents),numFreqPoints))
-    s12_imag = np.zeros((len(dirContents),numFreqPoints))
-    
-    s21_real = np.zeros((len(dirContents),numFreqPoints))
-    s21_imag = np.zeros((len(dirContents),numFreqPoints))
-    
-    s22_real = np.zeros((len(dirContents),numFreqPoints))
-    s22_imag = np.zeros((len(dirContents),numFreqPoints))
-    
-    s11_comp = np.zeros((len(dirContents),numFreqPoints), dtype=np.complex_)
-    s12_comp = np.zeros((len(dirContents),numFreqPoints), dtype=np.complex_)
-    s21_comp = np.zeros((len(dirContents),numFreqPoints), dtype=np.complex_)
-    s22_comp = np.zeros((len(dirContents),numFreqPoints), dtype=np.complex_)
-    
-    s12_mag = np.zeros((len(dirContents),numFreqPoints))
-    s12_ang = np.zeros((len(dirContents),numFreqPoints))
-    s11_dang = np.zeros((len(dirContents),numFreqPoints-1))
-    s12_dang =  np.zeros((len(dirContents),numFreqPoints-1))
-    
-    S_train = np.zeros((2,2,numFreqPoints, len(dirContents)), dtype=np.complex_) # full complex S-matrix
-    
-    
-    # import S11 and S12 for each simulation
-    for i in range(0,len(dirContents)):
-        eps[i], sig[i], dist[i] = get_params_from_filename(dirContents[i])
-        #print(eps[i])
-    
-        fullFile_i = dataPath + '/' + dirContents[i]
-        data_i = pandas.read_excel(fullFile_i, sheetname="Scattering Sij(f)")
-        freqStep = data_i.values[1,0] - data_i.values[2,0]
-        
-        f = data_i.values[:,0]
-    
-        s11_real[i,:] = data_i.values[:,1]
-        s11_imag[i,:] = data_i.values[:,2]
-    
-        s11_mag[i,:], s11_ang[i,:] = realimag_to_magphase(s11_real[i,:], s11_imag[i,:])
-        # unwrap phase:
-        s11_ang[i,:] = np.unwrap(s11_ang[i,:])
-        #s11_dang[i,:] = np.diff(s11_ang[i,:])*freqStep
-        s11_dang[i,:] = np.diff(s11_ang[i,:])
-    
-        s12_real[i,:] = data_i.values[:,3]
-        s12_imag[i,:] = data_i.values[:,4]
-    
-        s12_mag[i,:], s12_ang[i,:] = realimag_to_magphase(s12_real[i,:], s12_imag[i,:])
-        s12_ang[i,:] = np.unwrap(s12_ang[i,:])
-        #s12_dang[i,:] = np.diff(s12_ang[i,:])*freqStep
-        s12_dang[i,:] = np.diff(s12_ang[i,:])
-        
-        s21_real[i,:] = data_i.values[:,5]
-        s21_imag[i,:] = data_i.values[:,6]
-        
-        s22_real[i,:] = data_i.values[:,7]
-        s22_imag[i,:] = data_i.values[:,8]
-        
-        s11_comp[i,:] = s11_real[i,:] + s11_imag[i,:]*1j
-        s12_comp[i,:] = s12_real[i,:] + s12_imag[i,:]*1j
-        s21_comp[i,:] = s21_real[i,:] + s21_imag[i,:]*1j
-        s22_comp[i,:] = s22_real[i,:] + s22_imag[i,:]*1j
-        
-        for k in range(0,numFreqPoints):
-            S_train[:,:,k,i] = np.matrix([[s11_comp[i,k],s12_comp[i,k]], [s21_comp[i,k],s22_comp[i,k]]])
-        
-        
-    return f, s11_mag, s11_ang, s11_dang, s12_mag, s12_ang, s12_dang, eps, sig, dist, S_train
-
-def reshapeData(eps,sig,s11_mag,s11_ang,s11_dang,s12_mag,s12_ang,s12_dang):
-    print("Is reshape even used? Yes it is!!")
-    epsList = sorted(set(eps))
-    sigList = sorted(set(sig))
-
-    j = 0
-    lenEr = len(epsList)
-    lenSig = len(sigList)
-    lenF = len(f)-1
-    
-    mag11 = np.zeros((lenF,lenEr,lenSig))
-    dang11 = np.zeros((lenF,lenEr,lenSig))
-    
-    mag12 = np.zeros((lenF,lenEr,lenSig))
-    dang12 = np.zeros((lenF,lenEr,lenSig))
-    
-    ang12 = np.zeros((lenF,lenEr,lenSig))
-
-    for freqInd in range(0,len(f)-1):
-        for i in range(0,len(eps)):
-                # Select some frequency value, see how mag and ang are affected
-                mag11[freqInd,epsList.index(eps[i]), sigList.index(sig[i])] = s11_mag[i,freqInd]
-                dang11[freqInd,epsList.index(eps[i]), sigList.index(sig[i])] = s11_dang[i,freqInd]
-                
-                mag12[freqInd,epsList.index(eps[i]), sigList.index(sig[i])] = s12_mag[i,freqInd]
-                dang12[freqInd,epsList.index(eps[i]), sigList.index(sig[i])] = s12_dang[i,freqInd]
-                ang12[freqInd,epsList.index(eps[i]), sigList.index(sig[i])] = s12_ang[i,freqInd]
-                
-    return epsList, sigList, mag11, dang11, mag12, dang12, ang12
 
 
 def plotEstimate(eps_true, eps_est, sig_true, sig_est): # eps_true is 1-D
@@ -223,29 +141,18 @@ def plotEstimate(eps_true, eps_est, sig_true, sig_est): # eps_true is 1-D
     axes.set_ylim([sig_true-2,sig_true+2])
     plt.savefig(figPath + '/sigEst_ANN_TrueApprox' + str(int(np.mean(sig_true))) + '.png')
     plt.show()
-    
 
-## Generate model
-
-def generateMultiMLP(X_train_minmax, y_train_minmax, hidden_layer_size = [20,10], max_iter = 10000, solver = 'lbfgs', activation = 'logistic'):
-    # Make sure that X and y are scaled before using this function using the sklearn.preprocessing.MinMaxScaler tool
-    multReg = MultiOutputRegressor(MLPRegressor(activation=activation,  random_state = 323, hidden_layer_sizes=hidden_layer_size, max_iter = max_iter,solver=solver))
-    multReg.fit(X_train_minmax, y_train_minmax)
-    
-    y_pred = multReg.predict(X_train_minmax)
-    error = np.sum(np.absolute(y_train_minmax - y_pred))
-    
-    return multReg, error
-
-## Predict from model
-
-def predictFromMLP(X_test_minmax, multReg):
-    y_pred = multReg.predict(X_test_minmax)
-    
-    return y_pred
 
 def S_to_T(S):
-    """ Converts S-parameters to T-parameters"""
+    """ Converts S-parameters to T-parameters
+
+    Inputs:
+
+        - S -- 2x2xnumF S-parameters
+
+    Outputs:
+
+        - T -- 2x2xnumF T-parameters"""
     x11 = S[0,1]*S[1,0]-S[0,0]*S[1,1]
     x12 = S[0,0]
     x21 = -S[1,1]
@@ -255,7 +162,16 @@ def S_to_T(S):
     return T
     
 def T_to_S(T):
-    """ Converts T-parameters back to S-parameters"""
+    """ Converts T-parameters to S-parameters
+
+    Inputs:
+
+        - T -- 2x2xnumF T-parameters
+
+    Outputs:
+
+        - S -- 2x2xnumF S-parameters"""
+
     x11 = T[0,1]
     x12 = T[0,0]*T[1,1]-T[0,1]*T[1,0]
     x21 = 1
@@ -265,36 +181,53 @@ def T_to_S(T):
     return S
 
 def loadCalibration_WG():
-    """Load calibration data for the waveguide"""
+    """Load calibration data for the waveguide.
+    Uses the global calPath variable defined in the dp_ml installation to find the O and P
+    matrices for calibration.
+    
+    Outputs:
+
+        - O -- O matrix for port 1 of calibration for simulation
+        - P -- P matrix for port 2 of calibration for simulation
+    """
+
     calibration_WG = sio.loadmat(calPath + 'CylindricalWG_OP.mat')
 
     O_wg = calibration_WG['O_sim']
     P_wg = calibration_WG['P_sim']
-    f_wg = calibration_WG['f_wg']
-  
+    f_wg = calibration_WG['f_wg']    
+        
+    return O_wg, P_wg
+
+def performCalibration(S, O, P):
+    """Perform antenna calibration with the waveguide O and P matrices
+
+    Inputs:
+
+        - S -- 2x2xnumF complex signal of interest from either simulation or measurement
+        - O -- 2x2xnumF complex calibration matrix for port 1
+        - P -- 2x2xnumF complex calibration matrix for port 2
+
+    Outputs:
+
+        - S_cal -- 2x2xnumF complex calibrated signal of interest (up to antenna aperture)"""
+
+    T_wg = np.zeros((2,2,S_wg.shape[2]),dtype = np.complex_)
+    T_cal = np.zeros((2,2,S_wg.shape[2]),dtype = np.complex_)
+    S_cal = np.zeros((2,2,S_wg.shape[2]),dtype = np.complex_)
+
     O_wg_T = np.zeros((2,2,len(f_wg)),dtype=np.complex_)
     P_wg_T = np.zeros((2,2,len(f_wg)),dtype=np.complex_)
     
     O_wg_T_inv = np.zeros((2,2,len(f_wg)),dtype=np.complex_)
     P_wg_T_inv = np.zeros((2,2,len(f_wg)),dtype=np.complex_)
 
-    for i in range(0,len(f_wg)):
+    for i in range(0,S_wg.shape[2]):
         O_wg_T[:,:,i] = S_to_T(O_wg[:,:,i])
         P_wg_T[:,:,i] = S_to_T(P_wg[:,:,i])
         
         O_wg_T_inv[:,:,i] = np.linalg.inv(O_wg_T[:,:,i])
         P_wg_T_inv[:,:,i] = np.linalg.inv(P_wg_T[:,:,i])
-    
-        
-    return O_wg, P_wg, O_wg_T, P_wg_T, O_wg_T_inv, P_wg_T_inv
-
-def performCalibration_WG(S_wg, O_wg_T_inv, P_wg_T_inv):
-    """Perform antenna calibration with the waveguide O and P matrices"""
-    # T_cal = O_t^-1 * T_meas * P_t^-1
-    # Note - perform inverse of O and P first!
-    T_wg = np.zeros((2,2,S_wg.shape[2]),dtype = np.complex_)
-    T_cal = np.zeros((2,2,S_wg.shape[2]),dtype = np.complex_)
-    S_cal = np.zeros((2,2,S_wg.shape[2]),dtype = np.complex_)
     
     for i in range(0, S_wg.shape[2]):
         T_wg[:,:,i] = S_to_T(S_wg[:,:,i])
@@ -303,47 +236,16 @@ def performCalibration_WG(S_wg, O_wg_T_inv, P_wg_T_inv):
     
     return S_cal
 
-def SMatrixToArrays(S_mtx):
-    # changed second dim from numFreqPoints to S_mtx.shape([2])
-    s11_real = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    s11_imag = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    s11_mag = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    s11_ang = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    s12_real = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    s12_imag = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    
-    
-    s12_mag = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    s12_ang = np.zeros((S_mtx.shape[3],S_mtx.shape[2]))
-    s11_dang = np.zeros((S_mtx.shape[3],S_mtx.shape[2]-1))
-    s12_dang =  np.zeros((S_mtx.shape[3],S_mtx.shape[2]-1))
-    
-    
-    # import S11 and S12 for each simulation
-    for i in range(0,S_mtx.shape[3]): 
-        s11_real[i,:] = np.real(S_mtx[0,0,:,i])
-        s11_imag[i,:] = np.imag(S_mtx[0,0,:,i])
-    
-        s11_mag[i,:], s11_ang[i,:] = realimag_to_magphase(s11_real[i,:], s11_imag[i,:])
-        # unwrap phase:
-        s11_ang[i,:] = np.unwrap(s11_ang[i,:])
-        #s11_dang[i,:] = np.diff(s11_ang[i,:])*freqStep
-        s11_dang[i,:] = np.diff(s11_ang[i,:])
-    
-        s12_real[i,:] = np.real(S_mtx[0,1,:,i])
-        s12_imag[i,:] = np.real(S_mtx[0,1,:,i])
-    
-        s12_mag[i,:], s12_ang[i,:] = realimag_to_magphase(s12_real[i,:], s12_imag[i,:])
-        s12_ang[i,:] = np.unwrap(s12_ang[i,:])
-        #s12_dang[i,:] = np.diff(s12_ang[i,:])*freqStep
-        s12_dang[i,:] = np.diff(s12_ang[i,:])
-        
-    return s11_mag, s11_ang, s11_dang, s12_mag, s12_ang, s12_dang
 
 def plotFromS(f,S):
     plt.plot(f,mag2db(np.absolute(S[1,0,:,:])))
 
 def importSingleXL(dataPath, fileName):
+    """Reads in one excel file from a given dataPath
+
+    Inputs:
+
+        - dataPath ---  """
     fullFile_i = dataPath + '/' + fileName
     data_i = pandas.read_excel(fullFile_i, sheetname="Scattering Sij(f)")
     freqStep = data_i.values[1,0] - data_i.values[2,0]
@@ -401,8 +303,10 @@ def S_compToTimeDomain(freq, S_comp,tukeywin=0.5):
 	#freq is the array of frequency
 	#S_comp is the 4*len(freq) array of complex s11,s21,s12,s22
 	for i in range(0,4):
-		#S_comp[i,:] = tukey(len(freq)-1,tukeywin)*S_comp[i,:];
-		S_comp[i,:] = tukey(len(freq),tukeywin)*S_comp[i,:];
+		if len(freq) == len(S_comp[i,:]):
+			S_comp[i,:] = tukey(len(freq),tukeywin)*S_comp[i,:]
+		else:
+			S_comp[i,:] = tukey(len(freq)-1,tukeywin)*S_comp[i,:]
 	
 	t, s11_t = inverseczt_charlotte(freq[:-1], S_comp[0,:])
 	t, s21_t = inverseczt_charlotte(freq[:-1], S_comp[1,:])
@@ -412,3 +316,83 @@ def S_compToTimeDomain(freq, S_comp,tukeywin=0.5):
 	S_t = np.vstack((s11_t,s21_t,s12_t,s22_t))
 	
 	return t, S_t
+
+def polarToRect(radii, angles):
+    return radii * np.exp(1j*angles)
+
+def importCTI_4Files(fileName1, path = measPath, numF=1000):
+    S = np.zeros((8,numF))
+    S_comp = np.zeros((4,numF),dtype=np.complex)
+    sii_comp = np.zeros((numF,),dtype=np.complex)
+    f = np.zeros((numF,))
+    
+    for j in range(0,4):
+        measNum = (int(fileName1[-7:-4]) + j)
+        if measNum < 10:
+            zeroStr = '00'
+        elif 10 <= measNum < 100:
+            zeroStr = '0'
+        else:
+            zeroStr = ''
+        fileName_i = fileName1[:-7] + zeroStr + str(int(fileName1[-7:-4]) + j) + '.cti'
+
+        file_obj = open(path+"/"+fileName_i,'r')
+
+
+        line = file_obj.readline()
+        
+        if j == 0:
+            while not '!ANTPOS_TX:' in line:
+                line = file_obj.readline()
+                line = line.strip()
+            distances = line.replace('!ANTPOS_TX: 0E+0 ','')
+            distances = distances.replace(' 0E+0 0 90 270','')
+            distance = np.absolute(float(distances))
+            
+        while line != "VAR_LIST_BEGIN":
+            line = file_obj.readline()
+            line = line.strip()
+
+        
+        i = 0
+        line = file_obj.readline()
+        line = line.strip()
+        while line != "VAR_LIST_END":
+            if j == 0:
+                f[i] = float(line)
+            i = i+1
+            line = file_obj.readline()
+            line = line.strip()
+
+        line = file_obj.readline()
+
+        # Read S data
+        i = 0
+        line = file_obj.readline()
+        line = line.strip()
+        while line != "END":
+            #sii_comp[i] = float(line.split(',')[0]) + 1j*float(line.split(',')[1]) 
+            S[2*j,i], S[2*j+1,i] = dp_ml.realimag_to_magphase(float(line.split(',')[0]),float(line.split(',')[1]))
+            i = i+1
+            line = file_obj.readline()
+            line = line.strip()
+
+        #sii_comp = S[2*j,:] * (np.cos(S[2*j+1,:]) + 1j*np.sin(S[2*j+1,:]))
+        sii_comp = np.zeros((numF,),dtype=np.complex)
+        sii_comp = polarToRect(S[2*j,:], S[2*j+1,:]) 
+        S_comp[j,:] = sii_comp
+
+        line = file_obj.readline()
+
+    t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)
+
+    S_comp_2x2 = np.zeros((2,2,numF),dtype=np.complex)
+    S_comp_2x2[0,0,:] = S_comp[0,:]
+    S_comp_2x2[0,1,:] = S_comp[1,:]
+    S_comp_2x2[1,0,:] = S_comp[2,:]
+    S_comp_2x2[1,1,:] = S_comp[3,:]
+
+    return f, S_comp_2x2, S, t, S_t, distance
+
+
+

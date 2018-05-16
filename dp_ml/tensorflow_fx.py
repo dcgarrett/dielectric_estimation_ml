@@ -118,6 +118,7 @@ def runModel(dbName, dbHier, init, saver, loss, training_op, X_ph, y_ph, n_epoch
 				print(epoch, "Train loss:", loss_train[epoch])
 			
 		save_path = saver.save(sess, modelFileName)
+	return modelFileName
 
 
 def getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime='frequency', procFx = procIdentity, scale=True,order=False):
@@ -235,7 +236,8 @@ def getMax(sig, dbFile=None, nmax = 1, scale = True):
         SMax = np.zeros((sig.shape[0]-1, nmax*2))
 
         t = sig[0,:]
-        for i in range(1,sig.shape[0]): 
+        for i in range(1,sig.shape[0]):
+        #	for i in range(1,5): 
                 sij = sig[i,:]
                 
 
@@ -256,6 +258,79 @@ def getMax(sig, dbFile=None, nmax = 1, scale = True):
                         else:
                             SMax[(i-1),2*j] = sijMax[-(j+1)]
                             SMax[(i-1),2*j+1] = tMax_i[-(j+1)]
+
+        return SMax
+
+
+def getMaxAndEnergy(sig, dbFile = None, nmax = 1, scale = True):
+        SMax = np.zeros((sig.shape[0]-1, nmax*2))
+
+        t = sig[0,:]
+        #for i in range(1,sig.shape[0]):
+        for i in range(1,3): 
+                sij = sig[i,:]
+                
+
+                maxInd = argrelextrema(np.absolute(sij), np.greater)
+                ind = np.argpartition(np.absolute(sij[maxInd]), -nmax)[-nmax:]
+
+                maxNInd = [maxInd[0][i] for i in ind]
+                sijMax = [np.absolute(sij[i]) for i in maxNInd] 
+                tMax_i = [t[i] for i in maxNInd]
+
+                if len(sijMax) == 0:
+                    SMax[(i-1),:] = 0
+                else:
+                    for j in range(0,nmax):
+                        if scale:
+                            SMax[(i-1),2*j] = sijMax[-(j+1)] / 1e9
+                            SMax[(i-1),2*j+1] = tMax_i[-(j+1)] * 1e9
+                        else:
+                            SMax[(i-1),2*j] = sijMax[-(j+1)]
+                            SMax[(i-1),2*j+1] = tMax_i[-(j+1)]
+
+        for i in range(3,5):
+                sij = sig[i,:]
+                
+
+                Eij = sum(sij)
+
+                if len(sijMax) == 0:
+                    SMax[(i-1),:] = 0
+                else:
+                    for j in range(0,nmax):
+                        if scale:
+                            SMax[(i-1),2*j] = Eij * 2e-12
+                 
+                        else:
+                            SMax[(i-1),2*j] = Eij
+
+        return SMax
+
+
+def getEnergy(sig, dbFile = None, nmax = 1, scale = True):
+	# check the dimensions 
+        SMax = np.zeros((sig.shape[0]-1, nmax*2))
+
+        t = sig[0,:]
+        #for i in range(1,sig.shape[0]):
+
+
+        for i in range(1,3):
+                sij = sig[i,:]
+                
+
+                Eij = sum(sij)
+
+                if len(sijMax) == 0:
+                    SMax[(i-1),:] = 0
+                else:
+                    for j in range(0,nmax):
+                        if scale:
+                            SMax[(i-1),2*j] = Eij * 2e-12
+                 
+                        else:
+                            SMax[(i-1),2*j] = Eij
 
         return SMax
 
