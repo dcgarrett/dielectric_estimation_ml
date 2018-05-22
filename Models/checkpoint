@@ -1,2 +1,2 @@
-model_checkpoint_path: "ANN_model_20180214-140103_200-epochs_.ckpt"
-all_model_checkpoint_paths: "ANN_model_20180214-140103_200-epochs_.ckpt"
+model_checkpoint_path: "ANN_model_20180511-182150_10000-epochs_.ckpt"
+all_model_checkpoint_paths: "ANN_model_20180511-182150_10000-epochs_.ckpt"

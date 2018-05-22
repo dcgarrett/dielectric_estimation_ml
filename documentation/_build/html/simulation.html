@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>simulation &#8212; dp_ml 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="preprocessing" href="preprocessing.html" />
+    <link rel="prev" title="background" href="background.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>dp_ml 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>simulation</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="background.html">background</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="preprocessing.html">preprocessing</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="simulation">
+<h1>simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h1>
+<img alt="_images/dp_ml_logo.png" class="align-center" src="_images/dp_ml_logo.png" />
+<p>We use finite difference time domain (FDTD) simulations to generate our training data.
+This allows us to model the complex interactions between the antenna and the tissue.
+The antenna developed in our group - dubbed the Nahanni - has very high performance for biomedical applications, with large bandwidth (1.5-12 GHz), matching with human tissues, and isolation from exterior signals.
+However, its large and complex geometry causes long simulation time.
+To overcome this, we model it as a cylindrical waveguide with similar dimensions and filling material.
+These simulations can be performed at a fraction of the time, facilitating the generation of training data.
+However, we then require a method of interpreting measured and simulated data with the full antenna model using these simplified simulations.</p>
+<p>We consider three increasingly complex models of human tissues:</p>
+<ol class="arabic simple">
+<li>Homogenous tissues</li>
+<li>Layered tissues</li>
+<li>Realistic human models</li>
+</ol>
+<div class="section" id="homogeneous-tissues">
+<h2>1. homogeneous tissues<a class="headerlink" href="#homogeneous-tissues" title="Permalink to this headline">¶</a></h2>
+<p>We first simulate using a homogeneous model.
+Our training configuration consists of two cylindrical waveguides separated by the tissue under test.
+If desired, you can simulate a different configuration (see the Tutorial section).
+We simulate over a broad band of frequency: 2-12 GHz.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/WaveguideDiagram.png"><img alt="_images/WaveguideDiagram.png" src="_images/WaveguideDiagram.png" style="width: 301.6px; height: 336.8px;" /></a>
+</div>
+<p>The dielectric properties of the tissue are swept in a grid as:</p>
+<p>$$ \epsilon = 2:2:68 $$
+$$ \sigma = 0:1:10 $$</p>
+<p>This range of values represents expected properties in biological tissues.
+The tissue thickness is swept as:</p>
+<p>$$ d = 10:10:70 \textrm{mm} $$</p>
+<p>This also represents the range of expected thicknesses, particularly at the arm.</p>
+<p>Resulting 2-port S-Parameters are extracted as complex values at 5000 frequency points between 2-12 GHz.
+We could consider this as some 3-dimensional space where we modulate the dielectric properties and thickness, and extract the complex S-parameters <span class="math">\(\mathbf{X}\)</span>.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/dp_figs-16.png"><img alt="_images/dp_figs-16.png" src="_images/dp_figs-16.png" style="width: 213.6px; height: 190.2px;" /></a>
+</div>
+</div>
+<div class="section" id="layered-tissues">
+<h2>2. layered tissues<a class="headerlink" href="#layered-tissues" title="Permalink to this headline">¶</a></h2>
+<p>The challenge in simulating layered tissues is the high dimensionality.
+That is, there are many more possible configurations of the tissue, where if they were all accounted for would result in exponentially more simulations.
+To restrict this dimensionality, we consider cases similar to the forearm where there is skin on the exterior, with fat below the surface of the skin, filled with muscle.
+Skin is treated with uniform thickness and properties.
+Fat thickness is adjusted within expected ranges (2-6 mm) but with constant dielectric properties.</p>
+<p>Similar simulations are performed, but we only manipulate the properties of these tissues within narrower ranges around the expected properties.
+The thickness of muscle is also altered within expected ranges, resulting in arm thicknesses of 4-8 cm.</p>
+<p>This model is shown below.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/LayeredTissue.png"><img alt="_images/LayeredTissue.png" src="_images/LayeredTissue.png" style="width: 444.0px; height: 276.59999999999997px;" /></a>
+</div>
+<p>Here we have added one dimension to our space of input parameters to the simulation <span class="math">\(\mathcal{D}_{in,layer}\)</span>.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/dp_figs-17.png"><img alt="_images/dp_figs-17.png" src="_images/dp_figs-17.png" style="width: 213.6px; height: 195.6px;" /></a>
+</div>
+</div>
+<div class="section" id="realistic-human-models">
+<h2>3. realistic human models<a class="headerlink" href="#realistic-human-models" title="Permalink to this headline">¶</a></h2>
+<p>For a highly representative model of human tissues, we can use MRI-derived models from the IT&#8217;IS Foundation&#8217;s Virtual Population.
+Tissues are segmented, and associated properties are assigned.
+Depending on age and gender of the subject, several models can be used.
+For instance, we use 84 and 34 year-old males and a 26 year-old female.</p>
+<p>The issue again here is the dimensionality of the simulation space; there are very many different locations we could assess, and many different tissues which could change depending on the individual.
+We can restrict this by limiting simulations to certain locations.
+For instance, we assess the forearm for hydration assessment, where antennas are to be positioned at the midpoint between the wrist and the elbow.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/sim4life_nahanni.png"><img alt="_images/sim4life_nahanni.png" src="_images/sim4life_nahanni.png" style="width: 257.2px; height: 220.0px;" /></a>
+</div>
+<p>We start with the model as a baseline representation of this demographic.
+The features which are modified may depend on the application.
+In short-term hydration assessment, we expect bone and fat properties to remain constant, while muscle properties may change.
+Subcutaneous fat thickness may vary by subject, so we consider this as a dimension.
+Each subject&#8217;s total arm thickness may vary, which we can represent by modifying the muscle thickness.
+This gives us a few dimensions to operate in.
+We make the model pseudo-planar by creating flat skin and fat surfaces at the aperture of either antenna.
+This emulates the slight physical compression which occurs in measurement.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/humanmodel.png"><img alt="_images/humanmodel.png" src="_images/humanmodel.png" style="width: 472.0px; height: 291.0px;" /></a>
+</div>
+<p>We now add one more dimension to our search space, where the demographic of the measured subject <span class="math">\(A\)</span> will determine the appropriate simulation model to use.
+This will primarily change the bone and fat location and proportion within the arm.
+Note that we currently only have access to three of these models.
+As more segmented models are generated, this will become a better age- and sex-matched representation of each volunteer.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/dp_figs-18.png"><img alt="_images/dp_figs-18.png" src="_images/dp_figs-18.png" style="width: 213.6px; height: 195.6px;" /></a>
+</div>
+</div>
+<div class="section" id="data-storage">
+<h2>data storage<a class="headerlink" href="#data-storage" title="Permalink to this headline">¶</a></h2>
+<p>All extracted S-parameters are stored in hierarchical data format (HDF5).
+This allows for compressed storage but in an organized manner.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="background.html">background</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="preprocessing.html">preprocessing</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, David C. Garrett.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

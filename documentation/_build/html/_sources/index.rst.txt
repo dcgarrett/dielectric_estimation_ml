@@ -28,9 +28,13 @@ Table of contents:
 .. toctree::
    :maxdepth: 2
 
-   installation
    motivation
    background
+   simulation
+   preprocessing
+   machine_learning
+   simulation_to_measurement
+   results
+   installation
    tutorial
    function_definitions
-   results

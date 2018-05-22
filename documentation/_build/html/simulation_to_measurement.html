@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>converting between simulation and measurement &#8212; dp_ml 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="results" href="results.html" />
+    <link rel="prev" title="machine learning" href="machine_learning.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>dp_ml 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>converting between simulation and measurement</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="machine_learning.html">machine learning</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="results.html">results</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="converting-between-simulation-and-measurement">
+<h1>converting between simulation and measurement<a class="headerlink" href="#converting-between-simulation-and-measurement" title="Permalink to this headline">¶</a></h1>
+<p>This is a crucial step to the utility of applying models from simulation to measurement.
+One of our assumptions in creating this toolbox is that there exists some function which can map our simulated data to our measured data, and vice-versa.
+Here we will attempt to do this.</p>
+<p>To examine the difference between simulations using the circular waveguide and measurements with the Nahanni, several materials were assessed at many separation distances in both scenarios.
+This allows for the determination of a transformation which allows us to compare simulated and measured results.
+Examined materials include air, canola oil, and tap water.
+We are basically searching for a transfer function which allows us to &#8220;convert&#8221; between simulation and measurement.</p>
+<p>The general process is as follows:</p>
+<ol class="arabic simple">
+<li>Apply antenna calibration in measurement to move the reference planes to the antenna apertures.</li>
+<li>Add the response of the waveguides to the calibrated measured data.</li>
+<li>Find some transfer function which is reasonable for the variety of materials assessed.</li>
+</ol>
+<div class="section" id="calibrate-measurements">
+<h2>1. calibrate measurements<a class="headerlink" href="#calibrate-measurements" title="Permalink to this headline">¶</a></h2>
+<p>Calibration coefficients from measurement <span class="math">\(O_{meas}\)</span> and <span class="math">\(P_{meas}\)</span> are first found using Gate-Reflect-Line.</p>
+<p>The antenna response is then</p>
+</div>
+<div class="section" id="add-waveguide-response">
+<h2>2. add waveguide response<a class="headerlink" href="#add-waveguide-response" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="find-transfer-function">
+<h2>3. find transfer function<a class="headerlink" href="#find-transfer-function" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="machine_learning.html">machine learning</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="results.html">results</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, David C. Garrett.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

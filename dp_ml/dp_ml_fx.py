@@ -240,64 +240,6 @@ def performCalibration(S, O, P):
 def plotFromS(f,S):
     plt.plot(f,mag2db(np.absolute(S[1,0,:,:])))
 
-def importSingleXL(dataPath, fileName):
-    """Reads in one excel file from a given dataPath
-
-    Inputs:
-
-        - dataPath ---  """
-    fullFile_i = dataPath + '/' + fileName
-    data_i = pandas.read_excel(fullFile_i, sheetname="Scattering Sij(f)")
-    freqStep = data_i.values[1,0] - data_i.values[2,0]
-
-    f = data_i.values[:,0]
-
-    s11_real = data_i.values[:,1]
-    s11_imag = data_i.values[:,2]
-
-    s11_mag, s11_ang = realimag_to_magphase(s11_real, s11_imag)
-    # unwrap phase:
-    s11_ang = np.unwrap(s11_ang)
-    #s11_dang[i,:] = np.diff(s11_ang[i,:])*freqStep
-    s11_dang = np.diff(s11_ang)
-
-    s21_real = data_i.values[:,3]
-    s21_imag = data_i.values[:,4]
-
-    s21_mag, s21_ang = realimag_to_magphase(s21_real, s21_imag)
-    s21_ang = np.unwrap(s21_ang)
-    #s21_dang = np.diff(s21_ang)*freqStep
-    s21_dang = np.diff(s21_ang)
-
-
-    s12_real = data_i.values[:,5]
-    s12_imag = data_i.values[:,6]
-
-    s12_mag, s12_ang = realimag_to_magphase(s12_real, s12_imag)
-    # unwrap phase:
-    s12_ang = np.unwrap(s12_ang)
-    #s12_dang[i,:] = np.diff(s11_ang[i,:])*freqStep
-    s12_dang = np.diff(s12_ang)
-
-    s22_real = data_i.values[:,7]
-    s22_imag = data_i.values[:,8]
-
-    s22_mag, s22_ang = realimag_to_magphase(s22_real, s22_imag)
-    s22_ang = np.unwrap(s22_ang)
-    #s12_dang = np.diff(s12_ang)*freqStep
-    s22_dang = np.diff(s22_ang)
-
-    S_f = np.zeros((8, max(f.shape)))
-    S_f = np.vstack((s11_mag[0,:-1], s11_dang[0,:], s21_mag[0,:-1], s21_dang[0,:], s12_mag[0,:-1], s12_dang[0,:], s22_mag[0,:-1], s22_dang[0,:]))
-
-    s11_comp = s11_real[:-1] + s11_imag[:-1]*1j
-    s21_comp = s21_real[:-1] + s21_imag[:-1]*1j
-    s12_comp = s12_real[:-1] + s12_imag[:-1]*1j
-    s22_comp = s22_real[:-1] + s22_imag[:-1]*1j
-
-    S_comp = np.vstack((s11_comp, s21_comp, s12_comp, s22_comp))
-
-    return f, S_f, S_comp
 
 def S_compToTimeDomain(freq, S_comp,tukeywin=0.5):
 	#freq is the array of frequency
@@ -320,79 +262,7 @@ def S_compToTimeDomain(freq, S_comp,tukeywin=0.5):
 def polarToRect(radii, angles):
     return radii * np.exp(1j*angles)
 
-def importCTI_4Files(fileName1, path = measPath, numF=1000):
-    S = np.zeros((8,numF))
-    S_comp = np.zeros((4,numF),dtype=np.complex)
-    sii_comp = np.zeros((numF,),dtype=np.complex)
-    f = np.zeros((numF,))
-    
-    for j in range(0,4):
-        measNum = (int(fileName1[-7:-4]) + j)
-        if measNum < 10:
-            zeroStr = '00'
-        elif 10 <= measNum < 100:
-            zeroStr = '0'
-        else:
-            zeroStr = ''
-        fileName_i = fileName1[:-7] + zeroStr + str(int(fileName1[-7:-4]) + j) + '.cti'
 
-        file_obj = open(path+"/"+fileName_i,'r')
-
-
-        line = file_obj.readline()
-        
-        if j == 0:
-            while not '!ANTPOS_TX:' in line:
-                line = file_obj.readline()
-                line = line.strip()
-            distances = line.replace('!ANTPOS_TX: 0E+0 ','')
-            distances = distances.replace(' 0E+0 0 90 270','')
-            distance = np.absolute(float(distances))
-            
-        while line != "VAR_LIST_BEGIN":
-            line = file_obj.readline()
-            line = line.strip()
-
-        
-        i = 0
-        line = file_obj.readline()
-        line = line.strip()
-        while line != "VAR_LIST_END":
-            if j == 0:
-                f[i] = float(line)
-            i = i+1
-            line = file_obj.readline()
-            line = line.strip()
-
-        line = file_obj.readline()
-
-        # Read S data
-        i = 0
-        line = file_obj.readline()
-        line = line.strip()
-        while line != "END":
-            #sii_comp[i] = float(line.split(',')[0]) + 1j*float(line.split(',')[1]) 
-            S[2*j,i], S[2*j+1,i] = dp_ml.realimag_to_magphase(float(line.split(',')[0]),float(line.split(',')[1]))
-            i = i+1
-            line = file_obj.readline()
-            line = line.strip()
-
-        #sii_comp = S[2*j,:] * (np.cos(S[2*j+1,:]) + 1j*np.sin(S[2*j+1,:]))
-        sii_comp = np.zeros((numF,),dtype=np.complex)
-        sii_comp = polarToRect(S[2*j,:], S[2*j+1,:]) 
-        S_comp[j,:] = sii_comp
-
-        line = file_obj.readline()
-
-    t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)
-
-    S_comp_2x2 = np.zeros((2,2,numF),dtype=np.complex)
-    S_comp_2x2[0,0,:] = S_comp[0,:]
-    S_comp_2x2[0,1,:] = S_comp[1,:]
-    S_comp_2x2[1,0,:] = S_comp[2,:]
-    S_comp_2x2[1,1,:] = S_comp[3,:]
-
-    return f, S_comp_2x2, S, t, S_t, distance
 
 
 

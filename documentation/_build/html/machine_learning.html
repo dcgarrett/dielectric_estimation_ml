@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>machine learning &#8212; dp_ml 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="converting between simulation and measurement" href="simulation_to_measurement.html" />
+    <link rel="prev" title="preprocessing" href="preprocessing.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>dp_ml 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>machine learning</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="preprocessing.html">preprocessing</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="simulation_to_measurement.html">converting between simulation and measurement</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="machine-learning">
+<h1>machine learning<a class="headerlink" href="#machine-learning" title="Permalink to this headline">¶</a></h1>
+<img alt="_images/dp_ml_logo.png" class="align-center" src="_images/dp_ml_logo.png" />
+<dl class="docutils">
+<dt>This modelling problem can be described by the following:</dt>
+<dd><ul class="first last simple">
+<li>Continuous regression (estimating permittivity and conductivity)</li>
+<li>∼ 2-12 features as found from the preprocessing stage</li>
+<li>Training data on the order of 1000s of simulations</li>
+</ul>
+</dd>
+</dl>
+<p>Two techniques are found to be suitable candidates and will be discussed below: neural network regression, and elastic net regression.
+All techniques are implemented through the open-source toolbox <em>tensorflow</em>.</p>
+<p>As stated earlier, the machine learning algorithm &#8212; represented by a function <span class="math">\(g\)</span> &#8212; aims to generate functions which can map the denser spaces from the preprocessing stage <span class="math">\(\vec{Y}\)</span> into the final estimate of dielectric properties:</p>
+<div class="math">
+\[g:[\vec{Y}, \vec{d}] \rightarrow [\epsilon, \sigma]\]</div>
+<div class="section" id="neural-networks">
+<h2>neural networks<a class="headerlink" href="#neural-networks" title="Permalink to this headline">¶</a></h2>
+<p>Neural networks loosely model the functionality of biological neurons, whereby neurons respond to an input stimulus with some corresponding output defined by the activation function <span class="math">\(\chi\)</span> and neuron weights <span class="math">\(w\)</span>.
+We could start by examining a single neuron with several inputs:</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/dp_figs-19.png"><img alt="_images/dp_figs-19.png" src="_images/dp_figs-19.png" style="width: 204.60000000000002px; height: 316.25px;" /></a>
+</div>
+<p>The output of the neuron relates to the sum of each of the inputs multiplied by their weight for that neuron.
+The activation function is then applied to this sum, as well as some bias <span class="math">\(\theta\)</span>.
+If we have multiple neurons <span class="math">\(N\)</span> in a layer with <span class="math">\(M\)</span> inputs, there will be <span class="math">\(N\times M\)</span> weights to determine.
+With multiple layers of neurons, there will also be weights associated between layers.</p>
+<p>A single hidden layer is sufficient to model any arbitrary function.
+However, the advantage of multiple hidden layers is to reduce incidence of local minima, and to create more abstract models.
+Any model with two or more hidden layers is referred to as “deep learning”.</p>
+<p>In the case of dielectric property estimation, the input consists of the preprocessed features <span class="math">\(\vec{Y}\)</span> and the separation distance <span class="math">\(d\)</span>.
+We use two layers of neurons (hidden layers), with <span class="math">\(p\)</span> and <span class="math">\(q\)</span> number of neurons.
+There are two continuous outputs: permittivity and conductivity.
+The neural network configuration is shown below, for an example using time of flight and energy analysis.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/dp_figs-12.png"><img alt="_images/dp_figs-12.png" src="_images/dp_figs-12.png" style="width: 577.0px; height: 295.5px;" /></a>
+</div>
+<p>We use rectified linear units (ReLU) as the activation function as shown below.
+During the process of learning (backpropagation), many partial derivatives are computed.
+The ReLU has the advantage of having a derivative which exists and is easy to compute:</p>
+<p>The process of “learning” is simply determining the set of weights which produce the least error at the output with the training data.
+To train the network, we need a measure of error denoted <span class="math">\(SS_{nn}\)</span>.
+This is defined simply as the squared error of the permittivity and conductivity terms:</p>
+<p>$$ SS_{nn} = (\epsilon_{est}-\epsilon_{true})^2 + (\sigma_{est}-\sigma_{true})^2 $$</p>
+<p>We are seeking the coefficients in the neurons which minimizes this error in our training data.
+The algorithm we use is gradient descent.
+This takes advantage of the chain rule, where we can find the change in error according to the change in each neuron.</p>
+<div class="math">
+\[\frac{\partial S_{nn}}{\partial w_{jk}^l }\]</div>
+<p>In training the network, we modify the weights of each neuron &#8220;downhill&#8221; towards minimum error, moving an amount relating to the assigned learning rate.
+This is done successively with batches of training data, which are selected at random from the entire dataset.
+This ensures the chosen weights reflect the entire dataset.</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="_images/dp_figs-20.png"><img alt="_images/dp_figs-20.png" src="_images/dp_figs-20.png" style="width: 284.2px; height: 231.7px;" /></a>
+</div>
+<p>This network is implemented in TensorFlow, with training performed on GPU (NVIDIA Tesla P100 and GeForce 1060) for improved performance.
+As the training is performed, a measure of loss in the training dataset provides an estimate of the goodness of fit.
+Testing data is always applied after training to determine the quality of the network.</p>
+</div>
+<div class="section" id="elastic-net-regression">
+<h2>elastic net regression<a class="headerlink" href="#elastic-net-regression" title="Permalink to this headline">¶</a></h2>
+<p>Elastic net regression is a flexible method which combines strengths from several other models: ordinary least squares (OLS) regression, ridge regression, and LASSO regression.
+One might wonder what the issue is with ordinary least squares regression.
+In fact, the Gauss-Markov theorem states that of all unbiased estimators, OLS has the minimum variance in coefficient estimation.
+It is interesting to question, though, whether this is the best method purely in terms of mean-squared error (MSE).
+For instance, if we introduce a biased estimator - i.e. the mean of the estimated coefficients is offset from the true mean - we can reduce variance.
+This is shown in the figure below:</p>
+<a class="reference internal image-reference" href="_images/BiasVariance.jpg"><img alt="_images/BiasVariance.jpg" class="align-center" src="_images/BiasVariance.jpg" style="width: 326.5px; height: 326.5px;" /></a>
+<p>So even though the estimator is biased, the mean squared error can actually be less than the OLS case.
+Ridge and LASSO achieve this by introducing penalty terms for the complexity of the model, where the complexity is determined by the l2 and l1 norms of the model coefficients, respectively.
+Elastic net combines these two penalty terms, as shown below:</p>
+<div class="math">
+\[\begin{split}\hat{\beta}^{OLS} &amp;= \textrm{argmin}||y-X\beta||_2^2 \\
+\hat{\beta}^{ridge} &amp;= \textrm{argmin}||y-X\beta||_2^2 + \color{red} \lambda_2||\beta||_2^2 \\
+\hat{\beta}^{lasso} &amp;= \textrm{argmin}||y-X\beta||_2^2 + \color{blue} \lambda_1||\beta||_1  \\
+\hat{\beta}^{elastic} &amp;= \textrm{argmin}||y-X\beta||_2^2 + \color{red} \lambda_2||\beta||_2^2 \color{black} + \color{blue} \lambda_1||\beta||_1 \\\end{split}\]</div>
+<p>If we have multiple linear predictors with coefficients <span class="math">\(\beta\)</span>, elastic net regression can determine the dominant predictors.
+For instance, permittivity estimation is dominated by the transmission coefficient phase, and conductivity estimation is dominated by the transmission coefficient magnitude.
+This is therefore a useful method for combining multiple forms of information.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="preprocessing.html">preprocessing</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="simulation_to_measurement.html">converting between simulation and measurement</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, David C. Garrett.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>

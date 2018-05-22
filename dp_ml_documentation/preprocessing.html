@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>preprocessing &#8212; dp_ml 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="machine learning" href="machine_learning.html" />
+    <link rel="prev" title="simulation" href="simulation.html" /> 
+  </head>
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>dp_ml 1.0 documentation</span></a></h1>
+        <h2 class="heading"><span>preprocessing</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="simulation.html">simulation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="machine_learning.html">machine learning</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="preprocessing">
+<h1>preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this headline">¶</a></h1>
+<img alt="_images/dp_ml_logo.png" class="align-center" src="_images/dp_ml_logo.png" />
+<p>In assessing the reflected and transmitted signals, we record everything we can: generally thousands of frequency points, which corresponds to thousands of points in the time domain.
+Might there be a better way to represent these signals?
+Different forms of processing can be applied to the data prior to model generation.
+From the very sparse basis of the frequency and time domains, this may allow us to create a more dense and more meaningful space from which to learn.</p>
+<p>We are seeking functions which can map the high-dimensional measurement space (denoted <span class="math">\(\mathbf{X}\)</span>) to low-dimensional but informative dense spaces.
+Ultimately dielectric properties are the low-dimensional space we seek to estimate, whether as bulk estimates or in terms of Debye parameters.
+However, it can be much more efficient to train our methods using intermediate features (denoted <span class="math">\(\vec{Y}\)</span>).
+These intermediate features can also exploit physical characteristics of the material, allowing for much of the learning process to be human-understandable.
+A few methods for this function <span class="math">\(f\)</span> will be shown below.</p>
+<div class="math">
+\[f:\mathbf{X} \rightarrow \vec{Y}\]</div>
+<div class="section" id="peak-detection">
+<h2>peak detection<a class="headerlink" href="#peak-detection" title="Permalink to this headline">¶</a></h2>
+<p>A simple method is determining the peak of the reflected and transmitted time domain pulses.
+This is an efficient form of data storage, as a large time domain signal (~5000 samples) can be reduced to a simple two-element array (magnitude and time of the maxima) per S-parameter.
+We use the pulse envelope in the time domain to do this.</p>
+<p>$$ f: \mathbf{X} \rightarrow [\vec{t_{peak}}, \lvert \vec{s_{peak}}\rvert] $$</p>
+<p>In the transmitted signal, the time of arrival relates to the permittivity of a material and its magnitude relates with the conductivity.
+In the reflected signal, the dominant reflection will generally be at the antenna interface, and the magnitude relates to the mismatch between the antenna and tissue impedances.
+Rather than simply considering the greatest peak, we could also consider the <span class="math">\(k\)</span> dominant peaks.
+This may be useful for instance in layered media where multiple reflections occur, or in complex geometries where there may be multiple transmission paths.</p>
+</div>
+<div class="section" id="energy-analysis">
+<h2>energy analysis<a class="headerlink" href="#energy-analysis" title="Permalink to this headline">¶</a></h2>
+<p>Transmitted and reflected energy may be useful information for inferring both about the loss of a material and the reflections which occur inside it and at the antenna aperture.</p>
+<p>$$ f: \mathbf{X} \rightarrow [E_{refl}, E_{trans}] $$</p>
+<p>This function has a convenient analytical form, and can be done both in the time and frequency domain (equivalently, according to Parseval&#8217;s theorem):</p>
+<p>$$ E_{ij} = \int_{- \infty}^ \infty \lvert \mathbf{X}_{ij}(t) \rvert ^2 dt = \int_{-\infty}^\infty \lvert \mathbf{X}_{ij}(2\pi f) \rvert ^2 df $$</p>
+</div>
+<div class="section" id="wavelet-analysis">
+<h2>wavelet analysis<a class="headerlink" href="#wavelet-analysis" title="Permalink to this headline">¶</a></h2>
+<p>The shape of the reflected and transmitted pulse can be quite complex.
+If there are overlapping reflections and signal paths, it can be difficult to discern useful information from simple peaks analysis.
+Here we aim to use wavelet analysis to extract more informative features.</p>
+<p>We use the inner product between the signal and the wavelet to highlight characteristic shapes within the signal.
+A conventional inner product for two continuous functions which meet the <span class="math">\(L^2\)</span> criteria is:</p>
+<p>$$ \langle f(t), w(t) \rangle = \int_a^b f(t)w(t) dt $$</p>
+<p>where <span class="math">\(f(t)\)</span> is the signal of interest (e.g. a specific time-domain transmission signal for given properties), and <span class="math">\(w(t)\)</span> is a mother wavelet.</p>
+<p>Since digital signals are inherently discrete, this can also be expressed as:</p>
+<p>$$ \langle f, w \rangle = \sum_{n=0}^{n=N} f[n] w[n] $$</p>
+<p>where <span class="math">\(N\)</span> is the number of time steps, and <span class="math">\(n\)</span> is the current time sample.
+By shifting the mother wavelet along in the time domain axis and performing this inner product at each step, we can determine the times where the signal of interest best &#8220;aligns&#8221; with the mother wavelet.
+This may correspond to times of dominant transmissions and reflections in otherwise noisy signals.</p>
+<p>For the Mother wavelet, we use the Thru configuration for transmission signals, and the Reflect configuration for reflection signals.
+These should provide the &#8220;fingerprint&#8221; of ideal transmission and reflection.
+Similar patterns may then be extracted from more complex scenarios.</p>
+<p>An example of how this wavelet transform is shown below.</p>
+<img alt="_images/inner_product.gif" class="align-center" src="_images/inner_product.gif" />
+<p>Here we propose applying this wavelet transform, then applying the other preprocessing methods such as peaks analysis.
+This may provide a clearer starting point in complex scenarios.</p>
+</div>
+<div class="section" id="frequency-domain-analysis">
+<h2>frequency domain analysis<a class="headerlink" href="#frequency-domain-analysis" title="Permalink to this headline">¶</a></h2>
+<p>We record S-parameters in the frequency domain, where many frequency points are recorded independently.
+If we would like to also estimate dielectric properties independently at each frequency, we could use these parameters as our features for the machine learning algorithms.
+While these methods do not decrease the dimensionality of the extracted data, they make it more conducive to training the machine learning algorithms.</p>
+<p>Extracted data suffers from phase wrapping, since phase is bound by <span class="math">\(-\pi &lt; \phi &lt; \pi\)</span> as shown below.
+The differentiated phase (with respect to frequency) is thus considered.
+This is also physically representative of the group velocity, which in turn is related to <span class="math">\(\sqrt{\epsilon}\)</span>.</p>
+<a class="reference internal image-reference" href="_images/phaseWrapping.png"><img alt="_images/phaseWrapping.png" class="align-center" src="_images/phaseWrapping.png" style="width: 360.0px; height: 240.0px;" /></a>
+<p>An example of the magnitude and phase of the transmission coefficient with varying permittivity (x axis) and conductivity (separate curves) is shown below.
+It can be seen that the magnitude of the transmission coefficient is affected both by permittivity and conductivity, but primarily by conductivity.
+The differentiated phase of the transmission coefficient, however, is dominated by the permittivity.
+This makes intuitive sense since the permittivity dominates the signal speed within the tissue.</p>
+<a class="reference internal image-reference" href="_images/permittivityMag.png"><img alt="_images/permittivityMag.png" class="align-center" src="_images/permittivityMag.png" style="width: 360.0px; height: 240.0px;" /></a>
+<a class="reference internal image-reference" href="_images/permittivityArg.png"><img alt="_images/permittivityArg.png" class="align-center" src="_images/permittivityArg.png" style="width: 360.0px; height: 240.0px;" /></a>
+<p>In order to model the physical behaviour of the interactions - e.g. attenuation and phase coefficients - the extracted features (magnitude/differentiated phase of S-parameters) are expanded.
+The following feature expansions are performed, in order to account for physical relationships and some potential antenna behaviour which is not modeled analytically:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Squared values</li>
+<li>Square root of values</li>
+<li>Exponential of values</li>
+</ul>
+</div></blockquote>
+<p>Training data from the grid of simulations is then used to obtain estimator models for both permittivity and conductivity at each frequency point from the feature-expanded data.
+The resulting model coefficients can tell us about the dominant predictors of each parameter.
+For instance, permittivity estimation is dominated by the transmission coefficient phase, and conductivity estimation is dominated by the transmission coefficient magnitude.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="simulation.html">simulation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="machine_learning.html">machine learning</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, David C. Garrett.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>
