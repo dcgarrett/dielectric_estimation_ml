@@ -68,8 +68,12 @@ def newEntryFrequency(dbName, dbHier, indFileName, sepDist, eps, sig, freq, S_f)
 
 	with h5py.File(dbName,'r+') as f:
 		dset_f = f.create_dataset(dbHier + '/frequency/' + indFileName.replace('.xls',''),( max(freq.shape),9,),dtype='float64',compression='gzip')
+		#dset_f = f.create_dataset(dbHier + '/frequency/' + indFileName.replace('.xls',''),( max(freq.shape)-1,5,),dtype='complex',compression='gzip')
+
 		dset_f[:,0] = freq.T
 		dset_f[:,1:9] = S_f.T
+
+		#dset_f[:,1:5] = S_f.T
 		dset_f.attrs['sepDist'] = sepDist
 		dset_f.attrs['eps'] = eps
 		dset_f.attrs['sig'] = sig
@@ -120,7 +124,7 @@ def importSingleXL(dataPath, fileName):
     s11_real = data_i.values[:,1]
     s11_imag = data_i.values[:,2]
 
-    s11_mag, s11_ang = realimag_to_magphase(s11_real, s11_imag)
+    s11_mag, s11_ang = dp_ml.realimag_to_magphase(s11_real, s11_imag)
     # unwrap phase:
     s11_ang = np.unwrap(s11_ang)
     #s11_dang[i,:] = np.diff(s11_ang[i,:])*freqStep
@@ -129,7 +133,7 @@ def importSingleXL(dataPath, fileName):
     s21_real = data_i.values[:,3]
     s21_imag = data_i.values[:,4]
 
-    s21_mag, s21_ang = realimag_to_magphase(s21_real, s21_imag)
+    s21_mag, s21_ang = dp_ml.realimag_to_magphase(s21_real, s21_imag)
     s21_ang = np.unwrap(s21_ang)
     #s21_dang = np.diff(s21_ang)*freqStep
     s21_dang = np.diff(s21_ang)
@@ -138,7 +142,7 @@ def importSingleXL(dataPath, fileName):
     s12_real = data_i.values[:,5]
     s12_imag = data_i.values[:,6]
 
-    s12_mag, s12_ang = realimag_to_magphase(s12_real, s12_imag)
+    s12_mag, s12_ang = dp_ml.realimag_to_magphase(s12_real, s12_imag)
     # unwrap phase:
     s12_ang = np.unwrap(s12_ang)
     #s12_dang[i,:] = np.diff(s11_ang[i,:])*freqStep
@@ -147,13 +151,14 @@ def importSingleXL(dataPath, fileName):
     s22_real = data_i.values[:,7]
     s22_imag = data_i.values[:,8]
 
-    s22_mag, s22_ang = realimag_to_magphase(s22_real, s22_imag)
+    s22_mag, s22_ang = dp_ml.realimag_to_magphase(s22_real, s22_imag)
     s22_ang = np.unwrap(s22_ang)
     #s12_dang = np.diff(s12_ang)*freqStep
     s22_dang = np.diff(s22_ang)
 
     S_f = np.zeros((8, max(f.shape)))
-    S_f = np.vstack((s11_mag[0,:-1], s11_dang[0,:], s21_mag[0,:-1], s21_dang[0,:], s12_mag[0,:-1], s12_dang[0,:], s22_mag[0,:-1], s22_dang[0,:]))
+    #S_f = np.vstack((s11_mag[0,:-1], s11_dang[0,:], s21_mag[0,:-1], s21_dang[0,:], s12_mag[0,:-1], s12_dang[0,:], s22_mag[0,:-1], s22_dang[0,:]))
+    S_f = np.vstack((s11_mag[0,:-1], s11_ang[0,:-1], s21_mag[0,:-1], s21_ang[0,:-1], s12_mag[0,:-1], s12_ang[0,:-1], s22_mag[0,:-1], s22_ang[0,:-1]))
 
     s11_comp = s11_real[:-1] + s11_imag[:-1]*1j
     s21_comp = s21_real[:-1] + s21_imag[:-1]*1j
@@ -165,7 +170,7 @@ def importSingleXL(dataPath, fileName):
     return f, S_f, S_comp
 
 
-def convertXLtoHDF5(dataPath, dbName, dbHier, timeDomain = True):
+def convertXLtoHDF5(dataPath, dbName, dbHier, timeDomain = True, tukeywin=0.5):
 	"""Imports XLS files, checks if the data exists yet in the HDF5 file, and adds it if not"""
 
 	dirContents = os.listdir(dataPath)
@@ -191,18 +196,21 @@ def convertXLtoHDF5(dataPath, dbName, dbHier, timeDomain = True):
 			if S_f_dim[0] > S_f_dim[1]:
 				S_f = np.transpose(S_f)
 			# add to the HDF5 database
+			
+            ## CHANGED THIS Jul 02 2018::
 			dp_ml.newEntryFrequency(dbName, dbHier, dirContents[i], dist, eps, sig, f[:-1], S_f)
+			#dp_ml.newEntryFrequency(dbName, dbHier, dirContents[i], dist, eps, sig, f, S_comp)
 
 			if timeDomain:
 				# dimensions should be (numParams, numFrequencyPoints)
-				t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)
+				t, S_t = dp_ml.S_compToTimeDomain(f, S_comp,tukeywin=tukeywin)
 				S_t_dim = np.shape(S_t)
 				if S_f_dim[0] > S_f_dim[1]:
 					S_t = np.transpose(S_t)
 				dp_ml.newEntryTime(dbName, dbHier, dirContents[i], dist, eps, sig, t, S_t)
 
 
-def convertCTItoHDF5(dataPath, dbName, dbHier, timeDomain = True):
+def convertCTItoHDF5(dataPath, dbName, dbHier, timeDomain = True,tukeywin=0.5):
 	"""Imports XLS files, checks if the data exists yet in the HDF5 file, and adds it if not"""
 
 	dirContents = os.listdir(dataPath)
@@ -232,7 +240,7 @@ def convertCTItoHDF5(dataPath, dbName, dbHier, timeDomain = True):
 
 			if timeDomain:
 				# dimensions should be (numParams, numFrequencyPoints)
-				t, S_t = dp_ml.S_compToTimeDomain(f, S_comp)
+				t, S_t = dp_ml.S_compToTimeDomain(f, S_comp,tukeywin=tukeywin)
 				S_t_dim = np.shape(S_t)
 				if S_f_dim[0] > S_f_dim[1]:
 					S_t = np.transpose(S_t)

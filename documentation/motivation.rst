@@ -60,7 +60,7 @@ Protons and electrons are equally and oppositely charged (and even neutrons cons
 So it is conceivable that even in electrically neutral materials, there will be some interaction with the electric field.
  
 Consider again the familiar parallel plate capacitor.
-What happens when we stick some material between the charged plates?
+What happens when we stick some insulating material between the charged plates?
 The electric field causes the positive charges of the material to feel some force away from the positive plate, and the negative charges to feel a force towards it.
 If these charges can move to any extent, the result is that another field is generated inside the material due to their charge separation.
 This can be explained by looking more closely at how the material's particles interact with the applied field.
@@ -69,7 +69,7 @@ For instance, consider how neutral atoms respond to the applied field:
  .. image:: figures/tex/dp_figs-3.png
    :align: center
    :scale: 50
-\
+
 This results in a displacement of charge with a net charge on either side of the atom, where there will be a new field created within it.
 This is referred to as its polarization, and it points in the direction opposite to the original applied field.
 

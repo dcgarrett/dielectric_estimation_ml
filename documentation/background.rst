@@ -117,7 +117,7 @@ In this method, the objective is to recover bulk dielectric properties from ante
    :scale: 50
 
 We can now explore how the reflected and transmitted signals are affected by the tissue properties.
-By neglecting complex phenomena in the antenna such as radial spreading and near-field interaction, the wave propagation can be represented as a uniform plane wave.
+By first neglecting complex phenomena in the antenna such as radial spreading and near-field interaction, the wave propagation can be represented as a uniform plane wave.
 The magnitude of the transmitted signal is influenced by the attenuation coefficient :math:`\alpha`, and the phase of the transmitted signal is influenced by the phase coefficient :math:`\beta`. 
 These are found from the dielectric properties as:
 

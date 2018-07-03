@@ -52,10 +52,10 @@ def inverseczt_charlotte(freq,s11):
 	complexsig = phaseshift*bttczt
 	
 	# SHOULD THIS BE ABSOLUTE INSTEAD OF REAL??? TRYING THIS NOW
-	#tsig = np.real(complexsig)
+	tsig_real = np.real(complexsig)
 	tsig = np.absolute(complexsig)
 	
-	return t, tsig
+	return t, tsig, tsig_real
 
 def inverseczt_tukey(freq,s11,alpha=0.01):
 	# TSAR pulse parameters:

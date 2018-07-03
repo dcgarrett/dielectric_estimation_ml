@@ -158,9 +158,14 @@ def getBatchFromDB(dbFile, dbHier, iteration, batch_size, freqOrTime='frequency'
 		sig_i = group[groupNames[ind]].attrs['sig']
 		sep_i = group[groupNames[ind]].attrs['sepDist']
 
-		eps_avg = eps_i*sep_i/np.sum(sep_i)
-		sig_avg = sig_i*sep_i/np.sum(sep_i)
-		sep_tot = np.sum(sep_i)
+		if sep_i == 0:
+			eps_avg = eps_i
+			sig_avg = sig_i
+			sep_tot = 0
+		else:
+			eps_avg = eps_i*sep_i/np.sum(sep_i)
+			sig_avg = sig_i*sep_i/np.sum(sep_i)
+			sep_tot = np.sum(sep_i)
 
 		y_batch[i,0] = eps_avg 
 		y_batch[i,1] = sig_avg
@@ -199,6 +204,8 @@ def filterData(X, y, sepDist=None, eps=None, sig=None):
     if sepDist is not None:
         X_d = X[X[:,0,0] == sepDist]
         y_d = y[X[:,0,0] == sepDist]
+        if sepDist == 0:
+            return X_d, y_d
     else:
         X_d = X
         y_d = y
